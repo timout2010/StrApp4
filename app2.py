@@ -67,7 +67,7 @@ test_data2 = {
 
 
 # Azure Function endpoints
-from asyncio.windows_events import NULL
+
 #from symbol import test_nocond
 import streamlit as st
 import requests
@@ -175,7 +175,7 @@ def main2(test_data,out_data):
     #st.set_page_config(page_title="General Ledger testing", layout="wide")
     remote_css(   "https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.css")
 
-    if test_data is NULL:
+    if test_data is None:
         test_data =test_data2
 
     local_css("style.css")
@@ -419,4 +419,4 @@ def main2(test_data,out_data):
         st.write("Select a row to see related data in the subtable.")
 
 if __name__ == "__main__":
-    main2(NULL)
+    main2(None)
