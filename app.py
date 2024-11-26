@@ -650,7 +650,7 @@ def load_css(file_name):
         st.markdown(f'<style>{css}</style>', unsafe_allow_html=True)
 
 # Load the CSS files
-
+    
     
 
 def main():
@@ -688,8 +688,8 @@ def main():
         
     if createchart_clicked :
         createChart()
-    thread=None
-    threadUpload=None 
+    
+    
     
 
     if uploaded_file:
@@ -710,10 +710,10 @@ def main():
             
             st.session_state['col_status']="in progress"
             st.session_state['test_data']['status_column']="in progess"
-            threadUpload= threading.Thread(
+            st.session_state['threadUpload']= threading.Thread(
                 target=poll_for_columns,
                 args=(st.session_state['test_data'],)                )
-            threadUpload.start()
+            st.session_state['threadUpload'].start()
             
             
             
@@ -728,8 +728,8 @@ def main():
 
     st.subheader("Select Tests to Run")
     display_tableTests()
-    if threadUpload:
-        if threadUpload.is_alive():  # Check if the thread is still running
+    if 'threadUpload'  in st.session_state:
+        if st.session_state['threadUpload'].is_alive():  # Check if the thread is still running
             print("Thread upload")
             time.sleep(1)  # Adjust the
             st.rerun()
