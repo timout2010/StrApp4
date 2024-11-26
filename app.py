@@ -1,4 +1,5 @@
 
+from collections import namedtuple
 from tarfile import NUL
 from app2 import main2
 import threading
@@ -8,7 +9,7 @@ import pandas as pd
 import json
 import streamlit_highcharts as hct
 import asyncio
-from asyncio.windows_events import NULL
+
 import streamlit as st
 from azure.storage.blob import BlobServiceClient
 import requests
@@ -72,7 +73,7 @@ class Task:
             self.weight= name
 
 #FUNCTION_KEY = os.getenv("FUNCTION_KEY")  # If using function keys for authentication
-FUNCTION_KEY=NULL
+FUNCTION_KEY=""
 test_data = {
         "UnusualTest": {
             "status": "Not started",
@@ -682,13 +683,13 @@ def main():
         with st.spinner("Waiting for task to complete..."):
             while thread.is_alive():  # Check if the thread is still running
                 time.sleep(1)  # Adjust the
-        thread=NULL
+        thread=None
                 
         
     if createchart_clicked :
         createChart()
-    thread=NULL
-    threadUpload=NULL 
+    thread=None
+    threadUpload=None 
     
 
     if uploaded_file:
@@ -766,11 +767,11 @@ def main():
                 main2(test_data,out_data)
                 
         
-            # if thread!=NULL:
+            # if thread!=None:
             #     print("trhead1")
             #     thread.join()
             #     print("trhead2")
-            #     thread=NULL
+            #     thread=None
             #     st.rerun()
             # print("RERUN"+str(thread))           
             # # time.sleep(1)                
