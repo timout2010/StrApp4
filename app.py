@@ -39,7 +39,7 @@ data = {
 account_df = pd.DataFrame(data)
 
 # Streamlit app
-st.title("Account Data Viewer")
+st.title("Account Data Viewe2222r")
 
 # Display the DataFrame
 st.subheader("Complete Account Data")
