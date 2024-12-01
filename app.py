@@ -2,7 +2,7 @@ import pickle
 import locale
 from collections import namedtuple
 from tarfile import NUL
-from turtle import width
+#from turtle import width
 from app2 import main2
 import threading
 import streamlit as st
