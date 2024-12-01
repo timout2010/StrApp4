@@ -22,9 +22,9 @@ from PIL import Image
 from io import BytesIO
 import ast
 # Configuration
-#FUNCTION_BASE_URL = "http://localhost:7190/api" # e.g., https://<function-app>.azurewebsites.net/api/
+FUNCTION_BASE_URL = "http://localhost:7190/api" # e.g., https://<function-app>.azurewebsites.net/api/
 version="0.1a"
-FUNCTION_BASE_URL = "https://alexfuncdoc.azurewebsites.net/api" # e.g., https://<function-app>.azurewebsites.net/api/
+#FUNCTION_BASE_URL = "https://alexfuncdoc.azurewebsites.net/api" # e.g., https://<function-app>.azurewebsites.net/api/
 
 GENERATE_SAS_TOKEN_ENDPOINT = f"{FUNCTION_BASE_URL}/GenerateSASToken"
 START_ORCHESTRATOR_ENDPOINT = f"{FUNCTION_BASE_URL}/start-orchestrator"
@@ -368,8 +368,7 @@ def display_tableTests():
     locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
     
     
-    if( "postedbyList" in  test_data):
-        test_data['selectPostedBy' ]= st.multiselect(            "Select posted by:",            options=test_data["postedbyList"],            key="postedbyList",placeholder="All items"        )
+    
     for test_key, test in test_data.items():
         # print("!!!!!")    
         # print(test_key)    
@@ -760,7 +759,8 @@ def main():
             
             if 'fileUploaded' not in st.session_state:
                 with st.spinner("Uploading file..."):
-                    unique_file_name = f"{uuid.uuid4()}{original_file_name}"
+                    #unique_file_name = f"{uuid.uuid4()}{original_file_name}"
+                    unique_file_name = f"poc{original_file_name}"
                     st.session_state['test_data']['unique_file_name']=unique_file_name
                     supload_url = upload_file_to_blob( uploaded_file,unique_file_name)
                     st.session_state['fileUploaded']=True
@@ -784,6 +784,11 @@ def main():
         if(st.session_state['test_data']['status_column']=="Failed"):
             st.error("Isssue in uploading")
 
+    
+    if( "postedbyList" in  st.session_state['test_data']):
+        st.subheader("Select posted by") 
+        st.session_state['test_data']['selectPostedBy' ]= st.multiselect(            "",            options=st.session_state['test_data']["postedbyList"],            key="postedbyList",placeholder="All items"        )
+        
     st.subheader("Select Tests to Run")
        
 
