@@ -1,6 +1,8 @@
-
+import pickle
+import locale
 from collections import namedtuple
 from tarfile import NUL
+from turtle import width
 from app2 import main2
 import threading
 import streamlit as st
@@ -20,8 +22,9 @@ from PIL import Image
 from io import BytesIO
 import ast
 # Configuration
-#FUNCTION_BASE_URL = "http://localhost:7190/api" # e.g., https://<function-app>.azurewebsites.net/api/
-FUNCTION_BASE_URL = "https://alexfuncdoc.azurewebsites.net/api" # e.g., https://<function-app>.azurewebsites.net/api/
+FUNCTION_BASE_URL = "http://localhost:7190/api" # e.g., https://<function-app>.azurewebsites.net/api/
+version="0.1a"
+#FUNCTION_BASE_URL = "https://alexfuncdoc.azurewebsites.net/api" # e.g., https://<function-app>.azurewebsites.net/api/
 
 GENERATE_SAS_TOKEN_ENDPOINT = f"{FUNCTION_BASE_URL}/GenerateSASToken"
 START_ORCHESTRATOR_ENDPOINT = f"{FUNCTION_BASE_URL}/start-orchestrator"
@@ -129,7 +132,29 @@ test_data = {
             "parameters": {},
             "count": 0,
             "sumAmount": 0
+        },
+            "SuspiciousTest": {
+            "status": "Not started",
+            "start_time": None,
+            "end_time": None,
+            "error": None,
+            "name": "Suspicious keywords",
+            "weight": 50,
+            "parameters": {"words":[
+                                    "accrue", "accrual", "adjust", "alter", "request", "audit", "bonus", "bury",
+                                    "cancel", "capital", "ceo", "cfo", "classify", "confidential", "correct",
+                                    "correction", "coverup", "director", "ebit", "error", "estimate", "fix",
+                                    "fraud", "gift", "hide", "incentive", "issue", "kite", "kiting", "lease",
+                                    "mis", "net", "per", "plug", "problem", "profit", "reclass", "rectify",
+                                    "reduce", "remove", "reverse", "reversing", "screen", "switch", "temp",
+                                    "test", "transfer"
+                                    ]
+
+                },
+            "count": 0,
+            "sumAmount": 0
         }
+       
     }
 
 @st.cache_data(ttl=600)
@@ -191,6 +216,10 @@ def start_orchestration(input_data):
     else:
         st.error(f"Failed to start orchestration: {response.text}")
         st.stop()
+
+def local_css(file_name):
+    with open(file_name) as f:
+        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 
 
 def check_job_status(instance_id,typeid):
@@ -286,6 +315,7 @@ def create_chart():
 def display_parameters(test_key):
     test = test_data[test_key]
     st.write("Set parameters for:", test["name"])
+  
     # Add specific parameter inputs here based on test type
     if test_key == "UnusualTest":
         test["parameters"]["threshold"] = st.number_input(
@@ -296,11 +326,50 @@ def display_parameters(test_key):
     elif test_key == "RoundedTest":
         test["parameters"]["rounding_base"] = st.selectbox(
             "Select Rounding Base", [10, 100, 1000, 10000, 100000, 1000000], key=test_key + "_param_rounding")
+    elif test_key == "SuspiciousTest":
+
+        new_word = st.text_input("Enter a word to add:", key="add_word_input")
+        if st.button("Add Word", key="add_word_button"):
+            if new_word and new_word not in test["parameters"]["words"] :
+                test["parameters"]["words"].append(new_word)
+                st.success(f"Word '{new_word}' added to the list.")
+            elif not new_word:
+                st.warning("Please enter a valid word.")
+            else:
+                st.warning("Word already exists in the list.")
+    
+        # Section to remove a word
+        st.subheader("Remove a Word")
+        selected_words = st.multiselect(
+            "Select words to remove:",
+            options=test["parameters"]["words"],
+            key="remove_word_listbox"
+        )
+        if st.button("Remove Selected Words", key="remove_word_button"):
+            if selected_words:
+                for word in selected_words:
+                    if word in test["parameters"]["words"]:
+                        test["parameters"]["words"].remove(word)
+                st.success(f"Removed words: {', '.join(selected_words)}")
+            else:
+                st.warning("No words selected for removal.")
+
+        # Display the list of words dynamically in a listbox
+        st.subheader("  Suspicious Words       ")
+        num_columns = 3
+        rows = [test["parameters"]["words"][i:i+num_columns] for i in range(0, len(test["parameters"]["words"]), num_columns)]
+        df = pd.DataFrame(rows)
+        df.columns=[f"Column {i+1}" for i in range(num_columns)]
+        st.dataframe(df,hide_index=True)
+        
 
 def display_tableTests():
     test_data= st.session_state['test_data']
+    locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
     
-#    print(test_data)
+    
+    if( "postedbyList" in  test_data):
+        test_data['selectPostedBy' ]= st.multiselect(            "Select posted by:",            options=test_data["postedbyList"],            key="postedbyList",placeholder="All items"        )
     for test_key, test in test_data.items():
         # print("!!!!!")    
         # print(test_key)    
@@ -325,7 +394,7 @@ def display_tableTests():
         with col5:
             st.text(test["count"])
         with col6:
-            st.text(test["sumAmount"])
+            st.text(locale.currency(test["sumAmount"], grouping=True))
     
 
 def poll_for_columns(test_data, polling_interval=2, max_attempts=30):
@@ -345,12 +414,12 @@ def poll_for_columns(test_data, polling_interval=2, max_attempts=30):
         print("start 2")
         #st.session_state['polling_status'] = "completed"
         status = check_job_status(instance_id, "columns")
-        print(status )
+        
         if status["output"] is not None:
             
             test_data["status_column"]="Completed"
-            
-
+            output_data= json.loads(status["output"] )
+            test_data["postedbyList"] = output_data["postedbyList"]
             print("poll_for_columns is Completed!!!!")  
             return
      #   else:
@@ -360,10 +429,11 @@ def poll_for_columns(test_data, polling_interval=2, max_attempts=30):
         # status_queue.put( "failed")
         # st.session_state['polling_status'] = "failed"
         test_data["status_column"]="Failed"
+
 def poll_for_chart(test_data,out_data, polling_interval=3, max_attempts=60):
     summary= []
     input_data={}
-    input_data['DatabricksJobId']=989779811879952 #BenfordRun
+    input_data['DatabricksJobId']=989779811879952 #Chart
     input_data['FileName']=test_data['unique_file_name']
     input_data['Params']= test_data
     del test_data['summary']
@@ -388,9 +458,13 @@ def poll_for_chart(test_data,out_data, polling_interval=3, max_attempts=60):
                 update_tests(test_data,json.loads(log_json))
             
         if status["output"] is not None:
-            print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-            # Parse the 'columns' field, which is a JSON string
-            out_data['summary']= status["output"]["RunTasks_Main"]
+            print("Chart Complted !")
+            
+            outp=json.loads(status['output'])
+
+            out_data['summary']= outp
+            
+            #out_data['summary']= status["output"]["RunTasks_Main"]
             test_data["status"]="completed"
             print("Completed poll_for_task")
             
@@ -429,7 +503,9 @@ def poll_for_task(test_data,out_data, polling_interval=3, max_attempts=60):
 
             out_data['summary']= outp
             
-            print("!!!!")
+            print("Summary output!!!!")
+            print(out_data['summary'])
+            print("Log output!!!!")
             print(outp['log'])
             
             update_tests(test_data,outp['log'])
@@ -557,8 +633,8 @@ def createChart2(out_data ):
     risk_per_account_df['risk_count'] = risk_per_account_df['risk_count'].astype(int)
 
     # Prepare data for HighCharts
-    categories = sorted(risk_per_account_df['account2'].unique().tolist())  # Sorted order for accounts
-    risks = sorted(risk_per_account_df['risk'].unique().tolist())  # Sorted risks
+    categories = sorted(risk_per_account_df['glAccountNumber'].unique().tolist())  # Sorted order for accounts
+    risks = sorted(risk_per_account_df['risk_label'].unique().tolist())  # Sorted risks
 
     # Create series data for HighCharts
     series = []
@@ -567,7 +643,7 @@ def createChart2(out_data ):
         for account in categories:
             # Sum up risk_count for each account and risk
             count = risk_per_account_df[
-                (risk_per_account_df['account2'] == account) & (risk_per_account_df['risk'] == risk)
+                (risk_per_account_df['glAccountNumber'] == account) & (risk_per_account_df['risk_label'] == risk)
             ]['risk_count'].sum()
             data.append(int(count))  # Ensure native Python int
         series.append({'name': risk, 'data': data})
@@ -619,7 +695,7 @@ def createChart3(out_data):
     # Prepare the data for Highcharts
     pie_data = df.to_dict(orient='records')
     # If needed, ensure proper types:
-    pie_data = [{'name': str(record['risk']), 'y': int(record['overall_risk_count'])} for record in pie_data]
+    pie_data = [{'name': str(record['risk_label']), 'y': int(record['overall_risk_count'])} for record in pie_data]
 
     #pie_data = [{'name': str(row['risk']), 'y': int(row['overall_risk_count'])} for row in df]
 
@@ -643,26 +719,15 @@ def createChart3(out_data):
     
     hct.streamlit_highcharts(chart_config)
 
-# Function to read and inject CSS files
-def load_css(file_name):
-    with open(file_name) as f:
-        css = f.read()
-        st.markdown(f'<style>{css}</style>', unsafe_allow_html=True)
 
-# Load the CSS files
-    
-    
-
+        
 def main():
 
     # Page Configuration
-    st.set_page_config(page_title="General Ledger testing", layout="wide")
-    # load_css('css/styles1.css')
-    # load_css('css/styles2.css')
-
-    st.title("General Ledger testing")
-        
-    
+    st.set_page_config(page_title="General Ledger testing ", layout="wide")
+    local_css("style.css")    
+    st.markdown("<img src='https://cdn.wolterskluwer.io/wk/fundamentals/1.15.2/logo/assets/medium.svg' alt='Wolters Kluwer Logo' width='190px' height='31px'>", unsafe_allow_html=True)
+    st.title("General Ledger testing v"+version)
     init()
     
     uploaded_file = st.file_uploader("Choose a CSV,ZIP file", type=['zip', 'csv'] )
@@ -674,6 +739,7 @@ def main():
     with col3:
         runbutton_clicked = st.button('Run tests', disabled=not st.session_state['runbutton_enabled'],use_container_width=True)
     #createChart()        
+
     if runbutton_clicked:
         
         thread = threading.Thread(
@@ -684,11 +750,6 @@ def main():
             while thread.is_alive():  # Check if the thread is still running
                 time.sleep(1)  # Adjust the
         thread=None
-                
-        
-    if createchart_clicked :
-        createChart()
-    
     
     
 
@@ -710,9 +771,7 @@ def main():
             
             st.session_state['col_status']="in progress"
             st.session_state['test_data']['status_column']="in progess"
-            st.session_state['threadUpload']= threading.Thread(
-                target=poll_for_columns,
-                args=(st.session_state['test_data'],)                )
+            st.session_state['threadUpload']= threading.Thread(                target=poll_for_columns,                args=(st.session_state['test_data'],)                )       
             st.session_state['threadUpload'].start()
             
             
@@ -720,67 +779,39 @@ def main():
         
         if(st.session_state['test_data']['status_column']=="Completed"):
             st.session_state['runbutton_enabled']=True
-            #placeholder.empty()
         if(st.session_state['test_data']['status_column']=="in progess"):
             st.info("CSV extraction is running in the background. You can continue using the UI.")
         if(st.session_state['test_data']['status_column']=="Failed"):
             st.error("Isssue in uploading")
 
     st.subheader("Select Tests to Run")
+       
+
     display_tableTests()
+       
+     
+    tab1, tab2 = st.tabs(["📈 Chart", "🗃 Tables"])
+
+    with tab1:
+        
+        if(st.session_state['out_data']):
+                createChart()
+                    
+    with tab2:
+        if 'summary' in st.session_state['out_data']:
+            main2(st.session_state['test_data'],st.session_state['out_data'])
+    st.button(".")                 
     if 'threadUpload'  in st.session_state:
         if st.session_state['threadUpload'].is_alive():  # Check if the thread is still running
-            print("Thread upload")
+            print("Thread uploading")
             time.sleep(1)  # Adjust the
-            st.rerun()
-
-    
-        
-
-                    
-        
-    # while thread.is_alive():
-            
-    #             display_tableTests()
-    #             time.sleep(0.5)  # Slight delay to avoid busy-waiting
-    #             st.rerun()
-        
-    test_data= st.session_state['test_data']
-    
-    if test_data:
-        
-        test_data= st.session_state['test_data']
-        out_data= st.session_state['out_data']
-        print("XXXX")
-        print(out_data)
-        if 'summary' in out_data:
- 
-            tab1, tab2 = st.tabs(["📈 Chart", "🗃 Tables"])
-
-            with tab1:
-                    test_data= st.session_state['test_data']
-                    if 'summary' in out_data:
-                        createChart()
-                    elif test_data['status']=="in_progress":
-                        time.sleep(1)                
-            with tab2:
-                main2(test_data,out_data)
-                
-        
-            # if thread!=None:
-            #     print("trhead1")
-            #     thread.join()
-            #     print("trhead2")
-            #     thread=None
-            #     st.rerun()
-            # print("RERUN"+str(thread))           
-            # # time.sleep(1)                
-            # # st.rerun()
+            st.rerun() 
                                     
 
 
 
 if __name__ == "__main__":
+
     main()
     #create_chart()
         
