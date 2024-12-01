@@ -1,6 +1,6 @@
 # Azure Function endpoints
-FUNCTION_BASE_URL = "http://localhost:7190/api" # e.g., https://<function-app>.azurewebsites.net/api/
-#FUNCTION_BASE_URL = "https://alexfuncdoc.azurewebsites.net/api" # e.g., https://<function-app>.azurewebsites.net/api/
+#FUNCTION_BASE_URL = "http://localhost:7190/api" # e.g., https://<function-app>.azurewebsites.net/api/
+FUNCTION_BASE_URL = "https://alexfuncdoc.azurewebsites.net/api" # e.g., https://<function-app>.azurewebsites.net/api/
 
 API_URL_DATA = f"{FUNCTION_BASE_URL}/GetPaginatedData"
 API_URL_TOTAL_RECORDS = f"{FUNCTION_BASE_URL}/GetTotalRecords"
