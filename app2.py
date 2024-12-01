@@ -1,6 +1,6 @@
 # Azure Function endpoints
-#FUNCTION_BASE_URL = "http://localhost:7190/api" # e.g., https://<function-app>.azurewebsites.net/api/
-FUNCTION_BASE_URL = "https://alexfuncdoc.azurewebsites.net/api" # e.g., https://<function-app>.azurewebsites.net/api/
+FUNCTION_BASE_URL = "http://localhost:7190/api" # e.g., https://<function-app>.azurewebsites.net/api/
+#FUNCTION_BASE_URL = "https://alexfuncdoc.azurewebsites.net/api" # e.g., https://<function-app>.azurewebsites.net/api/
 
 API_URL_DATA = f"{FUNCTION_BASE_URL}/GetPaginatedData"
 API_URL_TOTAL_RECORDS = f"{FUNCTION_BASE_URL}/GetTotalRecords"
@@ -178,15 +178,15 @@ def main2(test_data,out_data):
     if test_data is None:
         test_data =test_data2
 
-    local_css("style.css")
+   # local_css("style.css")
     tablename=sanitize_table_name(test_data['unique_file_name'])
 
 #    test_data =test_data
     st.title("Result screen - charts")
-    chart1url= out_data['summary']['chart3url']
+    chart3url= out_data['summary']['chart3url']
     
     
-    data = load_data_from_blob(chart1url)
+    data = load_data_from_blob(chart3url)
     df = pd.DataFrame(data)
     table_scorecard=""
 
@@ -215,8 +215,8 @@ def main2(test_data,out_data):
                     # Render the card HTML
                     st.markdown(f"""
                         <div class="card">
-                            <div class="{get_risk_class(row_data['risk'])}">
-                                <div class="header">{row_data['risk']}</div>
+                            <div class="{get_risk_class(row_data['risk_label'])}">
+                                <div class="header">{row_data['risk_label']}</div>
                                 <div class="meta">Risk Level</div>
                             </div>
                             <div class="kpi">
@@ -238,7 +238,7 @@ def main2(test_data,out_data):
                     # Add a button below the card with a unique key
                     if st.button("View", key=f"action_{idx}"):
                         st.session_state.page = 1
-                        st.session_state.filter=row_data['risk']
+                        st.session_state.filter=row_data['risk_label']
 
     
                         
@@ -316,6 +316,8 @@ def main2(test_data,out_data):
     
     # Get total number of records
     total_records = get_total_records(tablename,st.session_state.filter)
+    print(st.session_state.filter)
+    print(total_records )
     if total_records == 0:
         st.stop()
 
@@ -402,9 +404,9 @@ def main2(test_data,out_data):
     if selected_rows is not None:
         #st.write(selected_rows.get('journal_id'))
         selected_row = selected_rows
-        journal_id= selected_row.get('journal_id')  # Adjust 'id' to the column name that identifies the selected item
-        posted_date= selected_row.get('posted_date')  # Adjust 'id' to the column name that identifies the selected item
-        posted_by= selected_row.get('posted_by')  # Adjust 'id' to the column name that identifies the selected item
+        journal_id= selected_row.get('journalid')  # Adjust 'id' to the column name that identifies the selected item
+        posted_date= selected_row.get('enteredDateTime')  # Adjust 'id' to the column name that identifies the selected item
+        posted_by= selected_row.get('enteredBy')  # Adjust 'id' to the column name that identifies the selected item
         if journal_id is not None:
             st.markdown(f"### journal_id:{journal_id.iloc[0]}")
             with st.spinner("Loading.."):
