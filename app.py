@@ -23,7 +23,7 @@ from io import BytesIO
 import ast
 # Configuration
 #FUNCTION_BASE_URL = "http://localhost:7190/api" # e.g., https://<function-app>.azurewebsites.net/api/
-version="0.1a"
+version="0.2a"
 FUNCTION_BASE_URL = "https://alexfuncdoc.azurewebsites.net/api" # e.g., https://<function-app>.azurewebsites.net/api/
 
 GENERATE_SAS_TOKEN_ENDPOINT = f"{FUNCTION_BASE_URL}/GenerateSASToken"
@@ -117,6 +117,18 @@ test_data = {
             "end_time": None,
             "error": None,
             "name": "Rounded Amounts",
+            "weight": 50,
+            "parameters": {},
+            "count": 0,
+            "sumAmount": 0
+        },
+        
+        "UnexpectedposterTest": {
+            "status": "Not started",
+            "start_time": None,
+            "end_time": None,
+            "error": None,
+            "name": "Unexpected Poster",
             "weight": 50,
             "parameters": {},
             "count": 0,
@@ -326,6 +338,10 @@ def display_parameters(test_key):
     elif test_key == "RoundedTest":
         test["parameters"]["rounding_base"] = st.selectbox(
             "Select Rounding Base", [10, 100, 1000, 10000, 100000, 1000000], key=test_key + "_param_rounding")
+    elif test_key == "UnexpectedposterTest":
+        if( "postedbyList" in  st.session_state['test_data']):
+        
+            test["parameters"]['selectPostedBy' ]= st.multiselect(            "Select posted by",            options=st.session_state['test_data']["postedbyList"],            key="postedbyList",placeholder="None selected"        )
     elif test_key == "SuspiciousTest":
 
         new_word = st.text_input("Enter a word to add:", key="add_word_input")
@@ -353,6 +369,8 @@ def display_parameters(test_key):
                 st.success(f"Removed words: {', '.join(selected_words)}")
             else:
                 st.warning("No words selected for removal.")
+
+
 
         # Display the list of words dynamically in a listbox
         st.subheader("  Suspicious Words       ")
@@ -486,8 +504,8 @@ def poll_for_task(test_data,out_data, polling_interval=3, max_attempts=60):
         status = check_job_status(instance_id,"summary")
         print("poll_for_task:"+str(status))
         #print("poll_for_task2:"+type(status))
+        print("-------------------")
         
-        print(status)
         if 'log' in status:
             log_json = status['log']
             print("LOG:"+str(log_json) )
@@ -785,9 +803,7 @@ def main():
             st.error("Isssue in uploading")
 
     
-    if( "postedbyList" in  st.session_state['test_data']):
-        st.subheader("Select posted by") 
-        st.session_state['test_data']['selectPostedBy' ]= st.multiselect(            "",            options=st.session_state['test_data']["postedbyList"],            key="postedbyList",placeholder="All items"        )
+    
         
     st.subheader("Select Tests to Run")
        
