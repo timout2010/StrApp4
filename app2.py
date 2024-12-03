@@ -222,11 +222,11 @@ def main2(test_data,out_data):
                             <div class="kpi">
                                 <div class="metric">
                                     <div class="number">{row_data['overall_risk_count']}</div>
-                                    <div class="label">Count</div>
+                                    <div class="label">Total Journals</div>
                                 </div>
                                 <div class="metric">
                                     <div class="number">${row_data['sum_amount']:,.2f}</div>
-                                    <div class="label">Sum Amount</div>
+                                    <div class="label">Total Debit Amount </div>
                                 </div>
                             </div>
                             <div class="full-width-button">
@@ -287,11 +287,11 @@ def main2(test_data,out_data):
                         <div class="kpi">
                             <div class="metric">
                                 <div class="number">{row_data['count']}</div>
-                                <div class="label">Count</div>
+                                <div class="label">Total Journals</div>
                             </div>
                             <div class="metric">
                                 <div class="number">${row_data['sumAmount']:,.2f}</div>
-                                <div class="label">Sum Amount</div>
+                                <div class="label">Total Debit Amount </div>
                             </div>
                         </div>
                         <div class="full-width-button">
