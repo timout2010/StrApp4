@@ -41,6 +41,17 @@ test_data2 = {
             "count": 0,
             "sumAmount": 0
         },
+         "UnexpectedposterTest": {
+            "status": "Not started",
+            "start_time": None,
+            "end_time": None,
+            "error": None,
+            "name": "Unexpected Poster",
+            "weight": 50,
+            "parameters": {},
+            "count": 0,
+            "sumAmount": 0
+        },
         "RoundedTest": {
             "status": "Not started",
             "start_time": None,
@@ -138,6 +149,7 @@ def fetch_data(tablename,page, page_size,filter):
         columns = result['columns']
         data = result['data']
         df = pd.DataFrame(data)
+        df['sum_amount'] = pd.to_numeric(df['sum_amount'], errors='coerce')
         df = df[columns]
         return df
     else:
@@ -158,6 +170,7 @@ def fetch_subtable_data(tablename,filter,journal_id,posted_date,posted_by):
         columns = result['columns']
         data = result['data']
         df = pd.DataFrame(data)
+        df['amount'] = pd.to_numeric(df['amount'], errors='coerce')
         df = df[columns]
         return df
     else:
