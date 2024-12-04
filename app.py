@@ -23,7 +23,7 @@ from io import BytesIO
 import ast
 # Configuration
 #FUNCTION_BASE_URL = "http://localhost:7190/api" # e.g., https://<function-app>.azurewebsites.net/api/
-version="0.2a"
+version="0.3a"
 FUNCTION_BASE_URL = "https://alexfuncdoc.azurewebsites.net/api" # e.g., https://<function-app>.azurewebsites.net/api/
 
 GENERATE_SAS_TOKEN_ENDPOINT = f"{FUNCTION_BASE_URL}/GenerateSASToken"
@@ -325,7 +325,8 @@ def create_chart():
         st.error("No data to display")
 
 def display_parameters(test_key):
-    test = test_data[test_key]
+    #test = test_data[test_key]
+    test = st.session_state['test_data'][test_key]
     st.write("Set parameters for:", test["name"])
   
     # Add specific parameter inputs here based on test type
@@ -340,8 +341,8 @@ def display_parameters(test_key):
             "Select Rounding Base", [10, 100, 1000, 10000, 100000, 1000000], key=test_key + "_param_rounding")
     elif test_key == "UnexpectedposterTest":
         if( "postedbyList" in  st.session_state['test_data']):
-        
             test["parameters"]['selectPostedBy' ]= st.multiselect(            "Select posted by",            options=st.session_state['test_data']["postedbyList"],            key="postedbyList",placeholder="None selected"        )
+            #st.write("You selected:",             test["parameters"]['selectPostedBy' ])
     elif test_key == "SuspiciousTest":
 
         new_word = st.text_input("Enter a word to add:", key="add_word_input")
@@ -821,7 +822,8 @@ def main():
     with tab2:
         if 'summary' in st.session_state['out_data']:
             main2(st.session_state['test_data'],st.session_state['out_data'])
-    st.button(".")                 
+    if st.button("."):
+        print(st.session_state['test_data'])
     if 'threadUpload'  in st.session_state:
         if st.session_state['threadUpload'].is_alive():  # Check if the thread is still running
             print("Thread uploading")
