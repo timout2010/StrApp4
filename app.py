@@ -665,8 +665,8 @@ def createChart2(out_data ):
     # print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
     # print(test_data)
     
-    #chart1url= out_data['summary']['chart2url']
-    chart1url="https://vsstoragelake.blob.core.windows.net/results/csv/risk_per_account/part-00000-tid-6608563947994153681-0a40edf0-9fc8-4f2e-87ea-571bcd46ce61-746-1-c000.csv?se=2024-12-05T11%3A12%3A31Z&sp=r&sv=2023-11-03&sr=b&sig=ItGWiAikVyMFYfmdtI81ysEAJFu7z730hQLXbFYKDa8%3D"
+    chart1url= out_data['summary']['chart2url']
+    #chart1url="https://vsstoragelake.blob.core.windows.net/results/csv/risk_per_account/part-00000-tid-6608563947994153681-0a40edf0-9fc8-4f2e-87ea-571bcd46ce61-746-1-c000.csv?se=2024-12-05T11%3A12%3A31Z&sp=r&sv=2023-11-03&sr=b&sig=ItGWiAikVyMFYfmdtI81ysEAJFu7z730hQLXbFYKDa8%3D"
     print(chart1url )
     data = load_data_from_blob(chart1url)
     risk_per_account_df = pd.DataFrame(data)
@@ -908,8 +908,8 @@ def createChart4(out_data):
     
     #test_data=st.session_state['test_data']
     
-    #chart4url= out_data['summary']['chart4url']
-    chart4url="https://vsstoragelake.blob.core.windows.net/results/csv/sunburn_df/part-00000-tid-976918198008392936-f35bf24a-ff10-4cac-a4c5-f1c217ba3642-738-1-c000.csv?se=2024-12-05T11%3A11%3A58Z&sp=r&sv=2023-11-03&sr=b&sig=axvfW4upFwSMwIxyL1ku%2BOtd1aRMbUjpN3hATkuM9yI%3D"
+    chart4url= out_data['summary']['chart4url']
+    #chart4url="https://vsstoragelake.blob.core.windows.net/results/csv/sunburn_df/part-00000-tid-976918198008392936-f35bf24a-ff10-4cac-a4c5-f1c217ba3642-738-1-c000.csv?se=2024-12-05T11%3A11%3A58Z&sp=r&sv=2023-11-03&sr=b&sig=axvfW4upFwSMwIxyL1ku%2BOtd1aRMbUjpN3hATkuM9yI%3D"
     # print(chart1url)
     data = load_data_from_blob(chart4url)
     df = pd.DataFrame(data)
