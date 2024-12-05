@@ -2,6 +2,7 @@ import pickle
 import locale
 from collections import namedtuple
 from tarfile import NUL
+from typing import Type
 #from turtle import width
 from app2 import main2
 import threading
@@ -23,7 +24,7 @@ from io import BytesIO
 import ast
 # Configuration
 #FUNCTION_BASE_URL = "http://localhost:7190/api" # e.g., https://<function-app>.azurewebsites.net/api/
-version="0.4a"
+version="0.5a"
 FUNCTION_BASE_URL = "https://alexfuncdoc.azurewebsites.net/api" # e.g., https://<function-app>.azurewebsites.net/api/
 
 GENERATE_SAS_TOKEN_ENDPOINT = f"{FUNCTION_BASE_URL}/GenerateSASToken"
@@ -584,8 +585,12 @@ def init():
 @st.cache_data    
 def load_data_from_blob(sas_url):
     #return pd.read_parquet(sas_url)
-    # print("------111:"+str(sas_url))
-    return pd.read_csv(sas_url)
+#    print("------111:")
+    #print (sas_url)
+    parsed_data = [json.loads(item) for item in sas_url]
+    return parsed_data 
+    #return pd.read_json(sas_url)
+    #return pd.read_csv(sas_url)
 
 def DisplayChart():
     left_col, right_col = st.columns([20,100])
@@ -929,12 +934,12 @@ def createChart4(out_data):
     {'id': 'B2', 'name': 'Item B2', 'parent': 'B', 'value': 12},
     ]
 
-    print(data)
+    st.title("General Ledger Account Hierarchy")
     sunburst_html = generate_sunburst_html(data )
     st.components.v1.html(sunburst_html, height=600)
 
     # Render the chart in Streamlit
-    st.title("General Ledger Account Hierarchy")
+
     #hct.streamlit_highcharts(options)
 
         
