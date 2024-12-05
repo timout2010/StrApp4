@@ -23,7 +23,7 @@ from io import BytesIO
 import ast
 # Configuration
 #FUNCTION_BASE_URL = "http://localhost:7190/api" # e.g., https://<function-app>.azurewebsites.net/api/
-version="0.3a"
+version="0.4a"
 FUNCTION_BASE_URL = "https://alexfuncdoc.azurewebsites.net/api" # e.g., https://<function-app>.azurewebsites.net/api/
 
 GENERATE_SAS_TOKEN_ENDPOINT = f"{FUNCTION_BASE_URL}/GenerateSASToken"
@@ -222,6 +222,8 @@ def start_orchestration(input_data):
     headers = {"Content-Type": "application/json"}
     # if FUNCTION_KEY:
     #     headers["x-functions-key"] = FUNCTION_KEY
+    print ("!!!!!!")
+    print(input_data)
     response = requests.post(START_ORCHESTRATOR_ENDPOINT, headers=headers, data=json.dumps(input_data))
     if response.status_code == 200:
         return response.json()['instanceId']
@@ -256,12 +258,13 @@ def update_tests(test_dest, status):
     return test_dest
 
 #@st.cache_data
-def extract_columns( file_name):
+def extract_columns( file_name,file_nameCA):
     # Prepare input data for column extraction
     input_data = {
         
         
         "FileName": file_name,
+        "FileNameCA":file_nameCA,
         "DatabricksJobId": 447087718645534
     }
 
@@ -391,12 +394,21 @@ def display_tableTests():
     for test_key, test in test_data.items():
         # print("!!!!!")    
         # print(test_key)    
-        # print(test)    
-        if(test==0):
-            continue
+        if isinstance(test, pd.Series):
+                if (test == 0).any():
+                    continue
+                else:
+                    print("No zero values in the Series.")
+        elif isinstance(test, (int, float, bool)):  # Scalar case
+                if test == 0:
+                    continue
+                else:
+                    print("Test is not zero.")
+        
+        
         
         if("name" not in test):
-            continue
+               continue
         
         col1, col2, col3, col4, col5, col6 = st.columns([2, 1, 2, 2, 1, 1])
         
@@ -418,14 +430,16 @@ def display_tableTests():
 def poll_for_columns(test_data, polling_interval=2, max_attempts=30):
     columns = []
     # print("start 1")
+    
     input_data = {
             
                     "ContainerName": "uploads",
                     "FileName": test_data['unique_file_name'],
+                    "FileNameCA":  test_data.get('unique_file_nameCA', ""),
                     "SelectedColumns": "",  # To be updated after column selection
                     "DatabricksJobId": 447087718645534  # Your Databricks job ID
                 }
-    instance_id= extract_columns(test_data['unique_file_name'])
+    instance_id= extract_columns(test_data['unique_file_name'],test_data.get('unique_file_nameCA', ""))
     print("poll for coll"+instance_id)
     for _ in range(max_attempts):
         time.sleep(polling_interval)
@@ -451,13 +465,18 @@ def poll_for_columns(test_data, polling_interval=2, max_attempts=30):
 def poll_for_chart(test_data,out_data, polling_interval=3, max_attempts=60):
     summary= []
     input_data={}
-    input_data['DatabricksJobId']=989779811879952 #Chart
-    input_data['FileName']=test_data['unique_file_name']
-    input_data['Params']= test_data
-    del test_data['summary']
+    
 
-    print("Start poll_for_chart")        
+    input_data['DatabricksJobId']=822693125667863 #Chart
+    input_data['FileName']=test_data['unique_file_name']
+    
+    input_data['Params']= json.dumps(test_data)
+    #del out_data['summary_chart']
+
+
+    print("Start poll_for_chart1")        
     print(input_data)
+    print("Start poll_for_chart1")        
     instance_id = start_orchestration( input_data)
     print("Start poll_for_chart"+instance_id )        
     for _ in range(max_attempts):
@@ -468,23 +487,20 @@ def poll_for_chart(test_data,out_data, polling_interval=3, max_attempts=60):
         #print("poll_for_task2:"+type(status))
         
         print(status)
-        if 'log' in status:
-            log_json = status['log']
-            print("LOG:"+str(log_json) )
-            if(log_json):
-                
-                update_tests(test_data,json.loads(log_json))
+        
             
         if status["output"] is not None:
             print("Chart Complted !")
+            
             
             outp=json.loads(status['output'])
 
             out_data['summary']= outp
             
+            
             #out_data['summary']= status["output"]["RunTasks_Main"]
-            test_data["status"]="completed"
-            print("Completed poll_for_task")
+            test_data["status_chart"]="completed"
+            print("Completed CHART")
             
             break
         else:
@@ -571,30 +587,34 @@ def load_data_from_blob(sas_url):
     # print("------111:"+str(sas_url))
     return pd.read_csv(sas_url)
 
-def createChart():
+def DisplayChart():
     left_col, right_col = st.columns([20,100])
     with left_col:
         with st.expander("Filters", expanded=True):
             account_df= fetch_data("accounts_type",1, 1,"")
             
             account_type = st.multiselect("Filter by Account Type", options=account_df["accountType"].unique(), default=None)
-            subtype = st.multiselect("Filter by Subtype", options=account_df["AccountSubType"].unique(), default=None)
+            subtype = st.multiselect("Filter by Subtype", options=account_df["accountSubType"].unique(), default=None)
 
             filtered_df = account_df
             if account_type:
                 filtered_df = filtered_df[filtered_df["accountType"].isin(account_type)]
             if subtype:
-                filtered_df = filtered_df[filtered_df["AccountSubType"].isin(subtype)]
+                filtered_df = filtered_df[filtered_df["accountSubType"].isin(subtype)]
 
-            st.session_state["filtered_df"]=filtered_df["id"].to_json()   
-            st.session_state['test_data']["filtered_df"]=filtered_df["id"].to_json()
+            st.session_state["filtered_df"]=filtered_df["glAccountNumber"] 
+            st.session_state['test_data']["filtered_df"]=filtered_df["glAccountNumber"].to_list()
             #st.dataframe(filtered_df)
             if st.button("Apply"):
-               
-               
+                print("XXXXX") 
+                st.session_state['test_dataChart']={}
+                st.session_state['test_dataChart']['unique_file_name']=st.session_state['test_data']['unique_file_name']
+                st.session_state['test_dataChart']['unique_file_nameCA']=st.session_state['test_data']['unique_file_nameCA']
+                st.session_state['test_dataChart']["filtered_df"]=filtered_df["glAccountNumber"].to_list()
+                
                 thread = threading.Thread(
                     target=poll_for_chart,
-                    args=(st.session_state['test_data'],st.session_state['out_data'])                )
+                    args=(st.session_state['test_dataChart'],st.session_state['out_data'])                )
                 thread.start()
                 with st.spinner("Waiting for task to complete..."):
                     while thread.is_alive():  # Check if the thread is still running
@@ -605,11 +625,13 @@ def createChart():
                 
     with right_col:
         if( 'summary' in st.session_state['out_data']):
+            
             createChart1(st.session_state['out_data'])
             createChart2(st.session_state['out_data'])
             createChart3(st.session_state['out_data'])
+            createChart4(st.session_state['out_data'])
 
-def createChart1(out_data):
+def createChart1(out_data): 
     
 
 #    test_data=st.session_state['test_data']
@@ -642,7 +664,9 @@ def createChart2(out_data ):
     ##test_data=st.session_state['test_data']
     # print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
     # print(test_data)
-    chart1url= out_data['summary']['chart2url']
+    
+    #chart1url= out_data['summary']['chart2url']
+    chart1url="https://vsstoragelake.blob.core.windows.net/results/csv/risk_per_account/part-00000-tid-6608563947994153681-0a40edf0-9fc8-4f2e-87ea-571bcd46ce61-746-1-c000.csv?se=2024-12-05T11%3A12%3A31Z&sp=r&sv=2023-11-03&sr=b&sig=ItGWiAikVyMFYfmdtI81ysEAJFu7z730hQLXbFYKDa8%3D"
     print(chart1url )
     data = load_data_from_blob(chart1url)
     risk_per_account_df = pd.DataFrame(data)
@@ -738,6 +762,181 @@ def createChart3(out_data):
     hct.streamlit_highcharts(chart_config)
 
 
+def build_hierarchy(df):
+    data = []
+    id_counter = 0  # To generate unique IDs
+
+    # Create a root node
+    data.append({'id': 'root', 'name': 'General Ledger', 'parent': '', 'value': None})
+
+    # Keep track of unique nodes at each level to avoid duplicates
+    level1_nodes = {}
+    level2_nodes = {}
+    level3_nodes = {}
+
+    for _, row in df.iterrows():
+        # Level names
+        level1_name = str(row['accountType'])
+        level2_name = str(row['accountSubType'])
+        level3_name = str(row['fsCaption'])
+        level4_name = str(row['glAccountName'])
+        value = row['total_amount']
+
+        # Level 1
+        if level1_name not in level1_nodes:
+            level1_id = f"L1_{level1_name}"
+            level1_nodes[level1_name] = level1_id
+            data.append({'id': level1_id, 'name': level1_name, 'parent': 'root', 'value': None})
+        else:
+            level1_id = level1_nodes[level1_name]
+
+        # Level 2
+        if level2_name not in level2_nodes:
+            level2_id = f"L2_{level2_name}"
+            level2_nodes[level2_name] = level2_id
+            data.append({'id': level2_id, 'name': level2_name, 'parent': level1_id, 'value': None})
+        else:
+            level2_id = level2_nodes[level2_name]
+
+        # Level 3
+        if level3_name not in level3_nodes:
+            level3_id = f"L3_{level3_name}"
+            level3_nodes[level3_name] = level3_id
+            data.append({'id': level3_id, 'name': level3_name, 'parent': level2_id, 'value': None})
+        else:
+            level3_id = level3_nodes[level3_name]
+
+        # Level 4 (Leaf Node)
+        level4_id = f"L4_{level4_name}_{id_counter}"
+        id_counter += 1  # Increment ID counter to ensure uniqueness
+        data.append({'id': level4_id, 'name': level4_name, 'parent': level3_id, 'value': value})
+
+    return data
+
+
+
+    
+
+def generate_sunburst_html(data):
+    data_json = json.dumps(data)  # Convert Python data to JSON for JavaScript
+    return f"""
+    <div id="container" style="height:600px; width:100%;"></div>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/modules/sunburst.js"></script>
+    <script>
+        const colors = [
+            "#4caf50", "#f44336", "#8bc34a", "#cddc39", "#e91e63", "#ffc107",
+            "#03a9f4", "#9c27b0", "#ff5722", "#607d8b"
+        ];
+
+        let colorIndex = 0;
+
+        // Add colors dynamically without modifying the original data
+        const dataWithColors = {data_json}.map(item => {{
+            return {{
+                ...item,
+                color: colors[colorIndex++ % colors.length]
+            }};
+        }});
+
+        Highcharts.chart('container', {{
+
+            chart: {{
+                height: '600'
+            }},
+
+            title: {{
+                text: 'General Ledger Account Hierarchy'
+            }},
+
+      
+            series: [{{
+                type: 'sunburst',
+                data: dataWithColors,
+                name: 'Root',
+                allowTraversingTree: true,
+                borderRadius: 3,
+                cursor: 'pointer',
+                dataLabels: {{
+                    format: '{{point.name}}',
+                    filter: {{
+                        property: 'innerArcLength',
+                        operator: '>',
+                        value: 16
+                    }}
+                }},
+                levels: [{{
+                    level: 1,
+                    levelIsConstant: false,
+                    dataLabels: {{
+                        filter: {{
+                            property: 'outerArcLength',
+                            operator: '>',
+                            value: 64
+                        }}
+                    }}
+                }}, {{
+                    level: 2,
+                    colorByPoint: true
+                }},
+                {{
+                    level: 3,
+                    colorVariation: {{
+                        key: 'brightness',
+                        to: -0.5
+                    }}
+                }}, {{
+                    level: 4,
+                    colorVariation: {{
+                        key: 'brightness',
+                        to: 0.5
+                    }}
+                }}]
+
+            }}],
+
+            tooltip: {{
+                headerFormat: '',
+                pointFormat: 'The population of <b>{{point.name}}</b> is <b>' +
+                    '{{point.value}}</b>'
+            }}
+        }});
+    </script>
+    """
+
+def createChart4(out_data):
+    
+    #test_data=st.session_state['test_data']
+    
+    #chart4url= out_data['summary']['chart4url']
+    chart4url="https://vsstoragelake.blob.core.windows.net/results/csv/sunburn_df/part-00000-tid-976918198008392936-f35bf24a-ff10-4cac-a4c5-f1c217ba3642-738-1-c000.csv?se=2024-12-05T11%3A11%3A58Z&sp=r&sv=2023-11-03&sr=b&sig=axvfW4upFwSMwIxyL1ku%2BOtd1aRMbUjpN3hATkuM9yI%3D"
+    # print(chart1url)
+    data = load_data_from_blob(chart4url)
+    df = pd.DataFrame(data)
+    #data = build_hierarchy(df)
+
+# Highcharts configuration
+    chart_title    ="xx"
+# Highcharts configuration
+    data = build_hierarchy(df)
+    simple_data = [
+    {'id': 'root', 'name': 'Root', 'parent': '', 'value': None},
+    {'id': 'A', 'name': 'Category A', 'parent': 'root', 'value': None},
+    {'id': 'A1', 'name': 'Item A1', 'parent': 'A', 'value': 10},
+    {'id': 'A2', 'name': 'Item A2', 'parent': 'A', 'value': 15},
+    {'id': 'B', 'name': 'Category B', 'parent': 'root', 'value': None},
+    {'id': 'B1', 'name': 'Item B1', 'parent': 'B', 'value': 7},
+    {'id': 'B2', 'name': 'Item B2', 'parent': 'B', 'value': 12},
+    ]
+
+    print(data)
+    sunburst_html = generate_sunburst_html(data )
+    st.components.v1.html(sunburst_html, height=600)
+
+    # Render the chart in Streamlit
+    st.title("General Ledger Account Hierarchy")
+    #hct.streamlit_highcharts(options)
+
         
 def main():
 
@@ -747,8 +946,11 @@ def main():
     st.markdown("<img src='https://cdn.wolterskluwer.io/wk/fundamentals/1.15.2/logo/assets/medium.svg' alt='Wolters Kluwer Logo' width='190px' height='31px'>", unsafe_allow_html=True)
     st.title("General Ledger testing v"+version)
     init()
-    
-    uploaded_file = st.file_uploader("Choose a CSV,ZIP file", type=['zip', 'csv'] )
+    col1, col2 = st.columns([1, 1])
+    with col1:
+        uploaded_file = st.file_uploader("#STEP2: Choose General ledger file", type=['zip', 'csv'] ,key="x2" )
+    with col2:
+        uploaded_file_CA= st.file_uploader("#STEP1:Choose Charts of account file", type=[ 'csv'],key="x1" )
     col1, col2,col3 = st.columns([1, 1,1])
     with col1:
         exccel_clicked = st.button('Excel', disabled=not st.session_state['runbutton_enabled'],use_container_width=True)
@@ -770,6 +972,17 @@ def main():
         thread=None
     
     
+    if uploaded_file_CA:
+            if 'fileUploadedCA' not in st.session_state:
+                with st.spinner("Uploading file..."):
+                    #unique_file_name = f"{uuid.uuid4()}{original_file_name}"
+                    original_file_name = uploaded_file_CA.name
+                    unique_file_name = f"ca{original_file_name}"
+                    
+                    supload_urlCA = upload_file_to_blob( uploaded_file_CA,unique_file_name)
+                    st.session_state['test_data']['unique_file_nameCA']=unique_file_name
+                    st.session_state['fileUploadedCA']=True
+
 
     if uploaded_file:
         if 'columns' not in st.session_state:
@@ -817,13 +1030,14 @@ def main():
     with tab1:
         
         if(st.session_state['out_data']):
-                createChart()
+                DisplayChart()
                     
     with tab2:
         if 'summary' in st.session_state['out_data']:
             main2(st.session_state['test_data'],st.session_state['out_data'])
     if st.button("."):
         print(st.session_state['test_data'])
+        
     if 'threadUpload'  in st.session_state:
         if st.session_state['threadUpload'].is_alive():  # Check if the thread is still running
             print("Thread uploading")
