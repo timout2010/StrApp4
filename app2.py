@@ -178,8 +178,9 @@ def fetch_subtable_data(tablename,filter,journal_id,posted_date,posted_by):
         return pd.DataFrame()
 def load_data_from_blob(sas_url):
     #return pd.read_parquet(sas_url)
-
-    return pd.read_csv(sas_url)
+    parsed_data = [json.loads(item) for item in sas_url]
+    return parsed_data 
+    #return pd.read_csv(sas_url)
 def sanitize_table_name(name):
     """Sanitizes a string to be used as a valid table name by replacing or removing special characters."""
     return name.replace(' ', '_').replace(';', '').replace('(', '').replace(')', '').replace(',', '').replace('.', '').replace('-', '')
