@@ -107,15 +107,6 @@ def header_bg(table_type):
     else:
         return "mvbackground"
 
-def get_risk_class(risk_level):
-    if risk_level == "LOW":
-        return "low-risk"
-    elif risk_level == "MEDIUM":
-        return "medium-risk"
-    elif risk_level == "HIGH":
-        return "high-risk"
-    else:
-        return "no-risk"
 
 
 @st.cache_data(ttl=3600)
@@ -134,7 +125,7 @@ def get_total_records(tablename,filter):
         st.error("Error fetching total records")
         return 0
 
-@st.cache_data(ttl=600)
+@st.cache_data(ttl=6000)
 def fetch_data(tablename,page, page_size,filter):
     params = {
         'page': page,
@@ -155,10 +146,10 @@ def fetch_data(tablename,page, page_size,filter):
     else:
         st.error("Error fetching data")
         return pd.DataFrame()
-
-def fetch_subtable_data(tablename,filter,journal_id,posted_date,posted_by):
+@st.cache_data(ttl=6000)
+def fetch_subtable_data(tablename,filter,journal_ids,posted_date,posted_by):
     params = {
-        'journal_id': journal_id,
+        'journal_ids': journal_ids,
         'posted_date': posted_date,
         'posted_by': posted_by,
         'tablename':tablename,
@@ -185,6 +176,7 @@ def sanitize_table_name(name):
     """Sanitizes a string to be used as a valid table name by replacing or removing special characters."""
     return name.replace(' ', '_').replace(';', '').replace('(', '').replace(')', '').replace(',', '').replace('.', '').replace('-', '')
 
+
 def main2(test_data,out_data):
     #st.set_page_config(page_title="General Ledger testing", layout="wide")
     remote_css(   "https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.css")
@@ -196,64 +188,6 @@ def main2(test_data,out_data):
     tablename=sanitize_table_name(test_data['unique_file_name'])
 
 #    test_data =test_data
-    st.title("Result screen - charts")
-    chart3url= out_data['summary']['chart3url']
-    
-    
-    data = load_data_from_blob(chart3url)
-    df = pd.DataFrame(data)
-    table_scorecard=""
-
-    num_cols = 3
-    cards_per_row = num_cols
-
-    # Open the main container div
-    total_cards = len(df)
-    total_rows = math.ceil(total_cards / cards_per_row)
-
-# Create a container div for the cards
-    
-
-    # Iterate over the DataFrame in chunks of three
-    for row_num in range(total_rows):
-        # Create a set of columns for the current row
-        cols = st.columns(num_cols)
-    
-        for col_num in range(num_cols):
-            # Calculate the index of the card
-            idx = row_num * cards_per_row + col_num
-        
-            if idx < total_cards:
-                row_data = df.iloc[idx]
-                with cols[col_num]:
-                    # Render the card HTML
-                    st.markdown(f"""
-                        <div class="card">
-                            <div class="{get_risk_class(row_data['risk_label'])}">
-                                <div class="header">{row_data['risk_label']}</div>
-                                <div class="meta">Risk Level</div>
-                            </div>
-                            <div class="kpi">
-                                <div class="metric">
-                                    <div class="number">{row_data['overall_risk_count']}</div>
-                                    <div class="label">Total Journals</div>
-                                </div>
-                                <div class="metric">
-                                    <div class="number">${row_data['sum_amount']:,.2f}</div>
-                                    <div class="label">Total Debit Amount </div>
-                                </div>
-                            </div>
-                            <div class="full-width-button">
-                                <!-- Streamlit button will be rendered here -->
-                            </div>
-                        </div>
-                    """, unsafe_allow_html=True)
-                
-                    # Add a button below the card with a unique key
-                    if st.button("View", key=f"action_{idx}"):
-                        st.session_state.page = 1
-                        st.session_state.filter=row_data['risk_label']
-
     
                         
                         
@@ -272,54 +206,7 @@ def main2(test_data,out_data):
 #    for row_num in range(total_rows):
         # Create a set of columns for the current row
     
-    num_cols = 5
-    cards_per_row=5
-    col_num=-1
-    row_num =-1
-    cols = st.columns(num_cols)
     
-    for test_key, row_data in test_data.items():
-        if("name" not in row_data ):
-                continue
-        col_num+=1
-        if col_num>=cards_per_row :
-            col_num=0
-            row_num +=1
-        # Calculate the index of the card
-        idx = row_num * cards_per_row + col_num
-        
-        if idx < total_cards:
-            
-            with cols[col_num]:
-                # Render the card HTML
-                st.markdown(f"""
-                    <div class="card">
-                        <div class="{get_risk_class("d")}">
-                            <div class="header">{row_data['name']}</div>
-                            <div class="meta">Risk Level</div>
-                        </div>
-                        <div class="kpi">
-                            <div class="metric">
-                                <div class="number">{row_data['count']}</div>
-                                <div class="label">Total Journals</div>
-                            </div>
-                            <div class="metric">
-                                <div class="number">${row_data['sumAmount']:,.2f}</div>
-                                <div class="label">Total Debit Amount </div>
-                            </div>
-                        </div>
-                        <div class="full-width-button">
-                            <!-- Streamlit button will be rendered here -->
-                        </div>
-                    </div>
-                """, unsafe_allow_html=True)
-                
-                # Add a button below the card with a unique key
-                if st.button("View", key=f"action2_{idx}"):
-                    st.session_state.page = 1
-                    st.session_state.filter=test_key
-                    
-
 
     page_size =100
     # Initialize session state for page number
@@ -330,7 +217,7 @@ def main2(test_data,out_data):
     
     # Get total number of records
     total_records = get_total_records(tablename,st.session_state.filter)
-    print(st.session_state.filter)
+    print("Filter"+st.session_state.filter)
     print(total_records )
     if total_records == 0:
         st.stop()
@@ -342,13 +229,13 @@ def main2(test_data,out_data):
 
     # Fetch and display data using AgGrid
     data = fetch_data(tablename,st.session_state.page, page_size,st.session_state.filter)
-    st.markdown(f"### {st.session_state.filter}")
+    
     st.write(f"Displaying page {st.session_state.page} of {total_pages} (Total records: {total_records}) ")
     
     # Configure AgGrid options
     gb = GridOptionsBuilder.from_dataframe(data)
     gb.configure_default_column(filterable=True, sortable=True, resizable=True)
-    gb.configure_selection(selection_mode='single', use_checkbox=False)
+    gb.configure_selection(selection_mode='multiple', use_checkbox=True)
     grid_options = gb.build()
 
     # Display data using AgGrid
@@ -415,16 +302,20 @@ def main2(test_data,out_data):
 
     # Handle row selection and display subtable
     selected_rows = grid_response['selected_rows']
+    print("ROWS:"+str(selected_rows))
+    print(type(selected_rows))
     if selected_rows is not None:
         #st.write(selected_rows.get('journal_id'))
-        selected_row = selected_rows
-        journal_id= selected_row.get('journalid')  # Adjust 'id' to the column name that identifies the selected item
-        posted_date= selected_row.get('enteredDateTime')  # Adjust 'id' to the column name that identifies the selected item
-        posted_by= selected_row.get('enteredBy')  # Adjust 'id' to the column name that identifies the selected item
-        if journal_id is not None:
-            st.markdown(f"### journal_id:{journal_id.iloc[0]}")
-            with st.spinner("Loading.."):
-                subtable_data = fetch_subtable_data(tablename,st.session_state.filter,journal_id,posted_date,posted_by)
+        journalIds =  selected_rows['journalid'].tolist()
+        print (journalIds )
+        #journal_id= selected_row.get('journalid')  # Adjust 'id' to the column name that identifies the selected item
+        #posted_date= selected_row.get('enteredDateTime')  # Adjust 'id' to the column name that identifies the selected item
+        #posted_by= selected_row.get('enteredBy')  # Adjust 'id' to the column name that identifies the selected item
+        if journalIds is not None:
+            st.markdown(f"### journal_id:{journalIds}")
+            #with st.spinner("Loading.."):
+            subtable_data = fetch_subtable_data(tablename,st.session_state.filter,journalIds,"","")
+                #subtable_data = fetch_subtable_data(tablename,st.session_state.filter,journalIds,posted_date,posted_by)
             if not subtable_data.empty:
                 st.dataframe(subtable_data)
             else:
