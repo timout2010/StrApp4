@@ -1,4 +1,5 @@
 import pickle
+import math
 import locale
 from collections import namedtuple
 from tarfile import NUL
@@ -24,7 +25,7 @@ from io import BytesIO
 import ast
 # Configuration
 #FUNCTION_BASE_URL = "http://localhost:7190/api" # e.g., https://<function-app>.azurewebsites.net/api/
-version="0.5a"
+version="0.6a"
 FUNCTION_BASE_URL = "https://alexfuncdoc.azurewebsites.net/api" # e.g., https://<function-app>.azurewebsites.net/api/
 
 GENERATE_SAS_TOKEN_ENDPOINT = f"{FUNCTION_BASE_URL}/GenerateSASToken"
@@ -170,7 +171,7 @@ test_data = {
        
     }
 
-@st.cache_data(ttl=600)
+@st.cache_data(ttl=6900)
 def fetch_data(tablename,page, page_size,filter):
     params = {
         'page': page,
@@ -224,7 +225,7 @@ def start_orchestration(input_data):
     # if FUNCTION_KEY:
     #     headers["x-functions-key"] = FUNCTION_KEY
     print ("!!!!!!")
-    print(input_data)
+    #print(input_data)
     response = requests.post(START_ORCHESTRATOR_ENDPOINT, headers=headers, data=json.dumps(input_data))
     if response.status_code == 200:
         return response.json()['instanceId']
@@ -476,7 +477,7 @@ def poll_for_chart(test_data,out_data, polling_interval=3, max_attempts=60):
 
 
     print("Start poll_for_chart1")        
-    print(input_data)
+    #print(input_data)
     print("Start poll_for_chart1")        
     instance_id = start_orchestration( input_data)
     print("Start poll_for_chart"+instance_id )        
@@ -487,7 +488,7 @@ def poll_for_chart(test_data,out_data, polling_interval=3, max_attempts=60):
         print("poll_for_chart:"+str(status))
         #print("poll_for_task2:"+type(status))
         
-        print(status)
+        #print(status)
         
             
         if status["output"] is not None:
@@ -513,20 +514,20 @@ def poll_for_task(test_data,out_data, polling_interval=3, max_attempts=60):
     input_data['DatabricksJobId']=861358873659712 #BenfordRun
     input_data['FileName']=test_data['unique_file_name']
     input_data['Params']= json.dumps(test_data)
-    print("Start poll_for_task")        
+    
     instance_id = start_orchestration( input_data)
     print("Start poll_for_task"+instance_id )        
     for _ in range(max_attempts):
         time.sleep(polling_interval)
         
         status = check_job_status(instance_id,"summary")
-        print("poll_for_task:"+str(status))
+    
         #print("poll_for_task2:"+type(status))
-        print("-------------------")
+        
         
         if 'log' in status:
             log_json = status['log']
-            print("LOG:"+str(log_json) )
+            #print("LOG:"+str(log_json) )
             if(log_json):
                 
                 update_tests(test_data,json.loads(log_json))
@@ -538,10 +539,7 @@ def poll_for_task(test_data,out_data, polling_interval=3, max_attempts=60):
 
             out_data['summary']= outp
             
-            print("Summary output!!!!")
-            print(out_data['summary'])
-            print("Log output!!!!")
-            print(outp['log'])
+            
             
             update_tests(test_data,outp['log'])
             test_data["status"]="completed"
@@ -561,8 +559,11 @@ def poll_for_task(test_data,out_data, polling_interval=3, max_attempts=60):
 def init():
     if 'runbutton_enabled' not in st.session_state:
         st.session_state['runbutton_enabled'] = False
-     
         
+    if  'IsLoadedChart' not in st.session_state:
+        st.session_state['IsLoadedChart']=True
+    if  'test_dataChart' not in st.session_state:
+        st.session_state['test_dataChart']={}
     if 'filtered_df' not in st.session_state:
         st.session_state['filtered_df']=[]  
     if  'out_data' not in st.session_state:
@@ -592,10 +593,66 @@ def load_data_from_blob(sas_url):
     #return pd.read_json(sas_url)
     #return pd.read_csv(sas_url)
 
+
+@st.cache_data
+def load_chart(test_data,filter, polling_interval=2, max_attempts=30):
+    
+    print("Loading chart "+str(filter))
+    if "None" in filter :
+        return st.session_state['out_data']['summary']
+    input_data={}
+
+    input_data['DatabricksJobId']=822693125667863 #Chart
+    input_data['FileName']=test_data['unique_file_name']
+    input_data['Filter']=filter
+    input_data['Params']= json.dumps(test_data)
+    
+
+
+    print("Start poll_for_chart1")        
+    instance_id = start_orchestration( input_data)
+    print("Start poll_for_chart"+instance_id )        
+    for _ in range(max_attempts):
+        time.sleep(polling_interval)
+        
+        status = check_job_status(instance_id,"summary")
+        #print("poll_for_chart:"+str(status))
+        print(status)
+        
+        if status["output"] is not None:
+            print("Chart Complted !")
+            test_data["status"]="Completed"
+            outp=json.loads(status['output'])
+            
+            st.session_state["IsLoadedChart"]=False        
+            return outp
+
+        else:
+            test_data["status"]="in_progress"
+
+    
+
+
+
+
+
+    # thread = threading.Thread(
+    #     target=poll_for_chart,
+    #     args=(st.session_state['test_dataChart'],st.session_state['out_data'])                )
+    # thread.start()
+    # with st.spinner("Waiting for task to complete..."):
+    #     while not thread.is_alive():  # Check if the thread is still running
+    #         time.sleep(1)  # Adjust the
+    #     st.rerun()
+    
+
 def DisplayChart():
+    print("Display0")
     left_col, right_col = st.columns([20,100])
+    st.session_state["IsLoadedChart"]=True
     with left_col:
         with st.expander("Filters", expanded=True):
+            
             account_df= fetch_data("accounts_type",1, 1,"")
             
             account_type = st.multiselect("Filter by Account Type", options=account_df["accountType"].unique(), default=None)
@@ -611,26 +668,18 @@ def DisplayChart():
             st.session_state['test_data']["filtered_df"]=filtered_df["glAccountNumber"].to_list()
             #st.dataframe(filtered_df)
             if st.button("Apply"):
-                print("XXXXX") 
-                st.session_state['test_dataChart']={}
-                st.session_state['test_dataChart']['unique_file_name']=st.session_state['test_data']['unique_file_name']
-                st.session_state['test_dataChart']['unique_file_nameCA']=st.session_state['test_data']['unique_file_nameCA']
-                st.session_state['test_dataChart']["filtered_df"]=filtered_df["glAccountNumber"].to_list()
+    
+                #st.session_state['test_dataChart']={}
                 
-                thread = threading.Thread(
-                    target=poll_for_chart,
-                    args=(st.session_state['test_dataChart'],st.session_state['out_data'])                )
-                thread.start()
-                with st.spinner("Waiting for task to complete..."):
-                    while thread.is_alive():  # Check if the thread is still running
-                        time.sleep(1)  # Adjust the
-                    st.rerun()
+                st.session_state['test_dataChart']["filtered_df"]=filtered_df["glAccountNumber"].to_list()
+                st.session_state['out_data']['summary']=load_chart(st.session_state['test_dataChart'],st.session_state.filter)
                 
         
                 
     with right_col:
+        print("Display1")
         if( 'summary' in st.session_state['out_data']):
-            
+            print("Display2")
             createChart1(st.session_state['out_data'])
             createChart2(st.session_state['out_data'])
             createChart3(st.session_state['out_data'])
@@ -640,8 +689,9 @@ def createChart1(out_data):
     
 
 #    test_data=st.session_state['test_data']
-    print(out_data)
+    #print(out_data)
     chart1url= out_data['summary']['chart1url']
+    
     data = load_data_from_blob(chart1url)
     df = pd.DataFrame(data)
     
@@ -672,7 +722,7 @@ def createChart2(out_data ):
     
     chart1url= out_data['summary']['chart2url']
     #chart1url="https://vsstoragelake.blob.core.windows.net/results/csv/risk_per_account/part-00000-tid-6608563947994153681-0a40edf0-9fc8-4f2e-87ea-571bcd46ce61-746-1-c000.csv?se=2024-12-05T11%3A12%3A31Z&sp=r&sv=2023-11-03&sr=b&sig=ItGWiAikVyMFYfmdtI81ysEAJFu7z730hQLXbFYKDa8%3D"
-    print(chart1url )
+    #print(chart1url )
     data = load_data_from_blob(chart1url)
     risk_per_account_df = pd.DataFrame(data)
 
@@ -924,16 +974,7 @@ def createChart4(out_data):
     chart_title    ="xx"
 # Highcharts configuration
     data = build_hierarchy(df)
-    simple_data = [
-    {'id': 'root', 'name': 'Root', 'parent': '', 'value': None},
-    {'id': 'A', 'name': 'Category A', 'parent': 'root', 'value': None},
-    {'id': 'A1', 'name': 'Item A1', 'parent': 'A', 'value': 10},
-    {'id': 'A2', 'name': 'Item A2', 'parent': 'A', 'value': 15},
-    {'id': 'B', 'name': 'Category B', 'parent': 'root', 'value': None},
-    {'id': 'B1', 'name': 'Item B1', 'parent': 'B', 'value': 7},
-    {'id': 'B2', 'name': 'Item B2', 'parent': 'B', 'value': 12},
-    ]
-
+    
     st.title("General Ledger Account Hierarchy")
     sunburst_html = generate_sunburst_html(data )
     st.components.v1.html(sunburst_html, height=600)
@@ -941,6 +982,126 @@ def createChart4(out_data):
     # Render the chart in Streamlit
 
     #hct.streamlit_highcharts(options)
+def get_risk_class(risk_level):
+    if risk_level == "LOW":
+        return "low-risk"
+    elif risk_level == "MEDIUM":
+        return "medium-risk"
+    elif risk_level == "HIGH":
+        return "high-risk"
+    else:
+        return "no-risk"
+
+def DisplayCard(test_data,out_data):
+    
+    print("DisplCard0")
+    chart3url= out_data['summary']['chart3url']
+    
+    
+    data = load_data_from_blob(chart3url)
+    df = pd.DataFrame(data)
+    table_scorecard=""
+
+    num_cols = 3
+    cards_per_row = num_cols
+
+    # Open the main container div
+    total_cards = len(df)
+    total_rows = math.ceil(total_cards / cards_per_row)
+
+# Create a container div for the cards
+    
+
+    # Iterate over the DataFrame in chunks of three
+    for row_num in range(total_rows):
+        # Create a set of columns for the current row
+        cols = st.columns(num_cols)
+    
+        for col_num in range(num_cols):
+            # Calculate the index of the card
+            idx = row_num * cards_per_row + col_num
+        
+            if idx < total_cards:
+                row_data = df.iloc[idx]
+                with cols[col_num]:
+                    # Render the card HTML
+                    st.markdown(f"""
+                        <div class="card">
+                            <div class="{get_risk_class(row_data['risk_label'])}">
+                                <div class="header">{row_data['risk_label']}</div>
+                                <div class="meta">Risk Level</div>
+                            </div>
+                            <div class="kpi">
+                                <div class="metric">
+                                    <div class="number">{row_data['overall_risk_count']}</div>
+                                    <div class="label">Total Journals</div>
+                                </div>
+                                <div class="metric">
+                                    <div class="number">${row_data['sum_amount']:,.2f}</div>
+                                    <div class="label">Total Debit Amount </div>
+                                </div>
+                            </div>
+                            <div class="full-width-button">
+                                <!-- Streamlit button will be rendered here -->
+                            </div>
+                        </div>
+                    """, unsafe_allow_html=True)
+                
+                    # Add a button below the card with a unique key
+                    if st.button("View", key=f"action_{idx}"):
+                        st.session_state.page = 1
+                        st.session_state.filter=row_data['risk_label']
+                        st.session_state.IsLoadedChart=False
+    num_cols = 5
+    cards_per_row=5
+    col_num=-1
+    row_num =-1
+    cols = st.columns(num_cols)
+    
+    for test_key, row_data in test_data.items():
+        if("name" not in row_data ):
+                continue
+        
+        col_num+=1
+        if col_num>=cards_per_row :
+            col_num=0
+            row_num +=1
+        # Calculate the index of the card
+        idx = row_num * cards_per_row + col_num
+        
+        if idx < total_cards:
+            
+            with cols[col_num]:
+                # Render the card HTML
+                st.markdown(f"""
+                    <div class="card">
+                        <div class="{get_risk_class("d")}">
+                            <div class="header">{row_data['name']}</div>
+                            <div class="meta">Risk Level</div>
+                        </div>
+                        <div class="kpi">
+                            <div class="metric">
+                                <div class="number">{row_data['count']}</div>
+                                <div class="label">Total Journals</div>
+                            </div>
+                            <div class="metric">
+                                <div class="number">${row_data['sumAmount']:,.2f}</div>
+                                <div class="label">Total Debit Amount </div>
+                            </div>
+                        </div>
+                        <div class="full-width-button">
+                            <!-- Streamlit button will be rendered here -->
+                        </div>
+                    </div>
+                """, unsafe_allow_html=True)
+                
+                # Add a button below the card with a unique key
+                if st.button("View", key=f"action2_{idx}"):
+                    print("Clicked"+str(test_key))
+                    st.session_state.page = 1
+                    st.session_state.filter=test_key
+                    st.session_state.IsLoadedChart=False
+                    
 
         
 def main():
@@ -963,7 +1124,7 @@ def main():
         createchart_clicked = st.button('Report', disabled=not st.session_state['runbutton_enabled'],use_container_width=True)
     with col3:
         runbutton_clicked = st.button('Run tests', disabled=not st.session_state['runbutton_enabled'],use_container_width=True)
-    #createChart()        
+    
 
     if runbutton_clicked:
         
@@ -972,8 +1133,8 @@ def main():
                 args=(st.session_state['test_data'],st.session_state['out_data'])                )
         thread.start()
         with st.spinner("Waiting for task to complete..."):
-            while thread.is_alive():  # Check if the thread is still running
-                time.sleep(1)  # Adjust the
+            while thread.is_alive():  
+                time.sleep(1)  
         thread=None
     
     
@@ -986,6 +1147,7 @@ def main():
                     
                     supload_urlCA = upload_file_to_blob( uploaded_file_CA,unique_file_name)
                     st.session_state['test_data']['unique_file_nameCA']=unique_file_name
+                    
                     st.session_state['fileUploadedCA']=True
 
 
@@ -999,6 +1161,8 @@ def main():
                     #unique_file_name = f"{uuid.uuid4()}{original_file_name}"
                     unique_file_name = f"poc{original_file_name}"
                     st.session_state['test_data']['unique_file_name']=unique_file_name
+                    st.session_state['test_dataChart']['unique_file_name']=st.session_state['test_data']['unique_file_name']
+                    st.session_state['test_dataChart']['unique_file_nameCA']=st.session_state['test_data']['unique_file_nameCA']
                     supload_url = upload_file_to_blob( uploaded_file,unique_file_name)
                     st.session_state['fileUploaded']=True
                     
@@ -1022,23 +1186,37 @@ def main():
             st.error("Isssue in uploading")
 
     
+
     
         
     st.subheader("Select Tests to Run")
        
-
+    
     display_tableTests()
-       
-     
+    
+    if 'summary' in st.session_state['out_data']:   
+        print("Try to DisplayCard")
+        DisplayCard(st.session_state['test_data'],st.session_state['out_data']) 
+    st.markdown(f"### {st.session_state.get('filter','')}")
     tab1, tab2 = st.tabs(["📈 Chart", "🗃 Tables"])
-
+    print("IsLoadedChart: "+str(st.session_state.IsLoadedChart))
+    
     with tab1:
-        
+        #print("ssss"+st.session_state.IsLoadedChart)
+        #if  st.session_state.IsLoadedChart==False:
+        print("try to load chart")
+        if( 'summary' in st.session_state['out_data']):
+            print("try to load chart1"+str(st.session_state.get("filter","None")))
+            st.session_state['out_data']['summary']=load_chart(st.session_state['test_dataChart'],st.session_state.get("filter","None"))
+
         if(st.session_state['out_data']):
-                DisplayChart()
+            print("Chart try1 ")
+            
+            DisplayChart()
                     
     with tab2:
         if 'summary' in st.session_state['out_data']:
+            
             main2(st.session_state['test_data'],st.session_state['out_data'])
     if st.button("."):
         print(st.session_state['test_data'])
