@@ -697,26 +697,30 @@ def createChart1(out_data):
     
     data = load_data_from_blob(chart1url)
     df = pd.DataFrame(data)
+    st.subheader("Visualization 1: High-Risk Journals Per Month")
+    if len(df)>0:
     
     # Create charts using HighCharts
-    st.subheader("Visualization 1: High-Risk Journals Per Month")
-    line_chart_config = {
-    'chart': {'type': 'line'},
-    'title': {'text': 'High-Risk Journals Per Month'},
-    'xAxis': {
-        'categories': df['month'].tolist()
-    },
-    'yAxis': {
-        'title': {'text': 'Count of High-Risk Journals'}
-    },
-    'series': [{
-        'name': 'High Risk',
-        'data': df['high_risk_count'].tolist()
-    }]
-    }
-    st.subheader("High-Risk Journals Per Month")
-    #st.highcharts(line_chart_config)
-    hct.streamlit_highcharts(line_chart_config)
+    
+        line_chart_config = {
+        'chart': {'type': 'line'},
+        'title': {'text': 'High-Risk Journals Per Month'},
+        'xAxis': {
+            'categories': df['month'].tolist()
+        },
+        'yAxis': {
+            'title': {'text': 'Count of High-Risk Journals'}
+        },
+        'series': [{
+            'name': 'High Risk',
+            'data': df['high_risk_count'].tolist()
+        }]
+        }
+        st.subheader("High-Risk Journals Per Month")
+        #st.highcharts(line_chart_config)
+        hct.streamlit_highcharts(line_chart_config)
+    else:
+       st.info("Chart is empty") 
 
 def createChart2(out_data ):
     ##test_data=st.session_state['test_data']
