@@ -24,7 +24,7 @@ from PIL import Image
 from io import BytesIO
 import ast
 # Configuration
-#FUNCTION_BASE_URL = "http://localhost:7190/api" # e.g., https://<function-app>.azurewebsites.net/api/
+£FUNCTION_BASE_URL = "http://localhost:7190/api" # e.g., https://<function-app>.azurewebsites.net/api/
 version="0.6a"
 FUNCTION_BASE_URL = "https://alexfuncdoc.azurewebsites.net/api" # e.g., https://<function-app>.azurewebsites.net/api/
 
@@ -251,6 +251,7 @@ def check_job_status(instance_id,typeid):
         st.stop()
 
 def update_tests(test_dest, status):
+    print("UODATE TESTS!!!!")
     for test_name, test_info in status.items():
         if test_name in test_dest:
             for key, value in test_info.items():
@@ -999,13 +1000,16 @@ def get_risk_class(risk_level):
     else:
         return "no-risk"
 
-def DisplayCard(test_data,out_data):
+def DisplayCard(test_data):
     
+    out_data=st.session_state['out_data']
     print("DisplCard0")
     chart3url= out_data['summary']['chart3url']
     
-    
-    data = load_data_from_blob(chart3url)
+    if  "cards_data" not in st.session_state:
+        st.session_state["cards_data"]= load_data_from_blob(chart3url)
+        
+    data =st.session_state["cards_data"]
     df = pd.DataFrame(data)
     table_scorecard=""
 
@@ -1203,7 +1207,7 @@ def main():
     
     if 'summary' in st.session_state['out_data']:   
         print("Try to DisplayCard")
-        DisplayCard(st.session_state['test_data'],st.session_state['out_data']) 
+        DisplayCard(st.session_state['test_data']) 
     st.markdown(f"### {st.session_state.get('filter','')}")
     tab1, tab2 = st.tabs(["📈 Chart", "🗃 Tables"])
     print("IsLoadedChart: "+str(st.session_state.IsLoadedChart)+str(st.session_state['IsLoadedChartTab1']))
