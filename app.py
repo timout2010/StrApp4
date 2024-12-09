@@ -573,7 +573,10 @@ def init():
         st.session_state['test_data']['status_column']="Not started"
         st.session_state['test_data']['status']="Not started"
         #placeholder= st.empty()
-        
+    if 'IsLoadedChartTab1' not in st.session_state:
+        st.session_state['IsLoadedChartTab1'] = True
+    if 'IsLoadedChartTab2' not in st.session_state:
+        st.session_state['IsLoadedChartTab2'] = False
     if st.session_state['test_data']["status_column"]=="Completed":
             st.success("Column extraction completed.")
             st.session_state["columns"]=2
@@ -595,10 +598,10 @@ def load_data_from_blob(sas_url):
 
 
 @st.cache_data
-def load_chart(test_data,filter, polling_interval=2, max_attempts=30):
-    
+def load_chart(filter, polling_interval=2, max_attempts=30):
+    test_data=st.session_state['test_dataChart']
     print("Loading chart "+str(filter))
-    if "None" in filter :
+    if str(filter) =="none" :
         return st.session_state['out_data']['summary']
     input_data={}
 
@@ -672,7 +675,7 @@ def DisplayChart():
                 #st.session_state['test_dataChart']={}
                 
                 st.session_state['test_dataChart']["filtered_df"]=filtered_df["glAccountNumber"].to_list()
-                st.session_state['out_data']['summary']=load_chart(st.session_state['test_dataChart'],st.session_state.filter)
+                st.session_state['out_data']['summary']=load_chart(st.session_state.filter)
                 
         
                 
@@ -1199,25 +1202,31 @@ def main():
         DisplayCard(st.session_state['test_data'],st.session_state['out_data']) 
     st.markdown(f"### {st.session_state.get('filter','')}")
     tab1, tab2 = st.tabs(["📈 Chart", "🗃 Tables"])
-    print("IsLoadedChart: "+str(st.session_state.IsLoadedChart))
+    print("IsLoadedChart: "+str(st.session_state.IsLoadedChart)+str(st.session_state['IsLoadedChartTab1']))
     
     with tab1:
+        st.session_state['active_tab'] = 1 
         #print("ssss"+st.session_state.IsLoadedChart)
         #if  st.session_state.IsLoadedChart==False:
         print("try to load chart")
+        
         if( 'summary' in st.session_state['out_data']):
             print("try to load chart1"+str(st.session_state.get("filter","None")))
-            st.session_state['out_data']['summary']=load_chart(st.session_state['test_dataChart'],st.session_state.get("filter","None"))
+            st.session_state['out_data']['summary']=load_chart(st.session_state.get("filter","none"))
 
         if(st.session_state['out_data']):
             print("Chart try1 ")
             
             DisplayChart()
+        st.session_state['IsLoadedChartTab1'] = True
                     
     with tab2:
+        print("tab2")
+        
         if 'summary' in st.session_state['out_data']:
             
             main2(st.session_state['test_data'],st.session_state['out_data'])
+        st.session_state['IsLoadedChartTab2'] = True   
     if st.button("."):
         print(st.session_state['test_data'])
         
