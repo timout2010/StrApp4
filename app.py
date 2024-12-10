@@ -1218,7 +1218,7 @@ def main():
 
     if exccel_clicked:
          tablename=st.session_state['test_data']['unique_file_name'] 
-         download_data(tablename,st.session_state.filter)   
+         download_data(tablename,st.session_state.get("filter","none"))   
 
     
         
