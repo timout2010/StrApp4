@@ -25,7 +25,7 @@ from io import BytesIO
 import ast
 # Configuration
 #FUNCTION_BASE_URL = "http://localhost:7190/api" # e.g., https://<function-app>.azurewebsites.net/api/
-version="0.6a"
+version="0.7a"
 FUNCTION_BASE_URL = "https://alexfuncdoc.azurewebsites.net/api" # e.g., https://<function-app>.azurewebsites.net/api/
 
 GENERATE_SAS_TOKEN_ENDPOINT = f"{FUNCTION_BASE_URL}/GenerateSASToken"
@@ -33,6 +33,7 @@ START_ORCHESTRATOR_ENDPOINT = f"{FUNCTION_BASE_URL}/start-orchestrator"
 EXTRACT_COLUMNS_ENDPOINT = f"{FUNCTION_BASE_URL}/start-column-extraction"  # New endpoint for column extraction
 CHECK_JOB_STATUS_ENDPOINT = f"{FUNCTION_BASE_URL}/check-job-status"
 API_URL_DATA = f"{FUNCTION_BASE_URL}/GetPaginatedData"
+API_URL_DOWNLOAD = f"{FUNCTION_BASE_URL}/DownloadTableCsv"
 storage_connection_string="DefaultEndpointsProtocol=https;AccountName=vsstoragelake;AccountKey=uxCGrVpPSWf5lJRgCc8YAzkyoXONMvOcYtC2N0cfcCbriOYwNNBHA6wMU+oiUmcN4Hgc0gr3ZCO7+AStzZMAlw==;EndpointSuffix=core.windows.net"
 storage_account = "vsstoragelake"
 container = "testcontainer"
@@ -1113,6 +1114,25 @@ def DisplayCard(test_data):
                     st.session_state.filter=test_key
                     st.session_state.IsLoadedChart=False
                     
+def download_data(tablename,filter):
+    params = {
+        
+        'tablename':tablename,
+        'filter':filter
+        
+    }
+    with st.spinner("Preparing link for download"):
+        response = requests.get(API_URL_DOWNLOAD, params=params)
+    if response.status_code == 200:
+             st.download_button(
+                            label=f"Download CSV file",
+                            data=response.content,
+                            file_name=f"{tablename}_{filter}.csv",
+                            mime="text/csv"
+                        )
+    else:
+        st.error("Error download data")
+        return pd.DataFrame()
 
         
 def main():
@@ -1125,14 +1145,14 @@ def main():
     init()
     col1, col2 = st.columns([1, 1])
     with col1:
-        uploaded_file = st.file_uploader("#STEP2: Choose General ledger file", type=['zip', 'csv'] ,key="x2" )
+        uploaded_file = st.file_uploader(f"#STEP2: Choose General Ledger file", type=['zip', 'csv'] ,key="x2" )
     with col2:
-        uploaded_file_CA= st.file_uploader("#STEP1:Choose Charts of account file", type=[ 'csv'],key="x1" )
+        uploaded_file_CA= st.file_uploader("#STEP1:Choose Charts of Account file", type=[ 'csv'],key="x1" )
     col1, col2,col3 = st.columns([1, 1,1])
     with col1:
-        exccel_clicked = st.button('Excel', disabled=not st.session_state['runbutton_enabled'],use_container_width=True)
-    with col2:
-        createchart_clicked = st.button('Report', disabled=not st.session_state['runbutton_enabled'],use_container_width=True)
+        exccel_clicked = st.button('CSV file', disabled=not st.session_state['runbutton_enabled'],use_container_width=True)
+#    with col2:
+        
     with col3:
         runbutton_clicked = st.button('Run tests', disabled=not st.session_state['runbutton_enabled'],use_container_width=True)
     
@@ -1196,7 +1216,9 @@ def main():
         if(st.session_state['test_data']['status_column']=="Failed"):
             st.error("Isssue in uploading")
 
-    
+    if exccel_clicked:
+         tablename=st.session_state['test_data']['unique_file_name'] 
+         download_data(tablename,st.session_state.filter)   
 
     
         
