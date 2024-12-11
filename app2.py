@@ -193,7 +193,7 @@ def generate_GLtable_html(tablenname,filter ):
       href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-theme-alpine.css"
     />
 
-    <div style="height: 500px; " id="myGrid" class="ag-theme-alpine">xx</div>
+    <div style="height: 500px; " id="myGrid" class="ag-theme-alpine"></div>
     <!-- Define global variables -->
         <script>
             window.API_URL = "{API_URL_DATA}";
@@ -211,7 +211,7 @@ def generate_GLtable_html(tablenname,filter ):
 def main2(test_data,out_data):
     #st.set_page_config(page_title="General Ledger testing", layout="wide")
     remote_css(   "https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.css")
-
+    print("Main2")
     if test_data is None:
         test_data =test_data2
 
@@ -251,18 +251,18 @@ def main2(test_data,out_data):
     total_records =0
     print("Filter"+st.session_state.filter)
     print(total_records )
-    if total_records == 0:
-        st.stop()
-
-
+    #if total_records == 0:
+    #    st.stop()
+    
+    st.write(f"AG Grid enterprise edition")
     glTable_html = generate_GLtable_html(tablename,st.session_state.filter)
     st.components.v1.html(glTable_html , height=600)
+    
     
 
 
 
-
-    total_pages = (total_records + page_size - 1) // page_size
+    #total_pages = (total_records + page_size - 1) // page_size
 
     
         
@@ -270,7 +270,7 @@ def main2(test_data,out_data):
     # Fetch and display data using AgGrid
     #data = fetch_data(tablename,st.session_state.page, page_size,st.session_state.filter)
     
-    st.write(f"Displaying page {st.session_state.page} of {total_pages} (Total records: {total_records}) ")
+    #st.write(f"Displaying page {st.session_state.page} of {total_pages} (Total records: {total_records}) ")
     
     # # Configure AgGrid options
     # gb = GridOptionsBuilder.from_dataframe(data)
@@ -291,54 +291,54 @@ def main2(test_data,out_data):
 
     # Pagination controls under the table
     
-    pagination_container = st.container()
-    with pagination_container:
-        cols = st.columns(5)
+    # pagination_container = st.container()
+    # with pagination_container:
+    #     cols = st.columns(5)
 
-        # 'First' button
-        if st.session_state.page > 1:
-            if cols[0].button("⏮ First"):
-                st.session_state.page = 1
-                st.rerun()
-        else:
-            cols[0].write("")
+    #     # 'First' button
+    #     if st.session_state.page > 1:
+    #         if cols[0].button("⏮ First"):
+    #             st.session_state.page = 1
+    #             st.rerun()
+    #     else:
+    #         cols[0].write("")
 
-        # 'Previous' button
-        if st.session_state.page > 1:
-            if cols[1].button("◀ Previous"):
-                st.session_state.page -= 1
-                st.rerun()
-        else:
-            cols[1].write("")
+    #     # 'Previous' button
+    #     if st.session_state.page > 1:
+    #         if cols[1].button("◀ Previous"):
+    #             st.session_state.page -= 1
+    #             st.rerun()
+    #     else:
+    #         cols[1].write("")
 
-        # Page number input
-        page_input = cols[2].number_input(
-            "Page",
-            min_value=1,
-            max_value=total_pages,
-            value=st.session_state.page,
-            key='page_input',
-            label_visibility="collapsed"
-        )
-        if page_input != st.session_state.page:
-            st.session_state.page = page_input
-            st.rerun()
+    #     # Page number input
+    #     page_input = cols[2].number_input(
+    #         "Page",
+    #         min_value=1,
+    #         max_value=total_pages,
+    #         value=st.session_state.page,
+    #         key='page_input',
+    #         label_visibility="collapsed"
+    #     )
+    #     if page_input != st.session_state.page:
+    #         st.session_state.page = page_input
+    #         st.rerun()
 
-        # 'Next' button
-        if st.session_state.page < total_pages:
-            if cols[3].button("Next ▶"):
-                st.session_state.page += 1
-                st.rerun()
-        else:
-            cols[3].write("")
+    #     # 'Next' button
+    #     if st.session_state.page < total_pages:
+    #         if cols[3].button("Next ▶"):
+    #             st.session_state.page += 1
+    #             st.rerun()
+    #     else:
+    #         cols[3].write("")
 
-        # 'Last' button
-        if st.session_state.page < total_pages:
-            if cols[4].button("Last ⏭"):
-                st.session_state.page = total_pages
-                st.rerun()
-        else:
-            cols[4].write("")
+    #     # 'Last' button
+    #     if st.session_state.page < total_pages:
+    #         if cols[4].button("Last ⏭"):
+    #             st.session_state.page = total_pages
+    #             st.rerun()
+    #     else:
+    #         cols[4].write("")
 
     # Handle row selection and display subtable
     # selected_rows = grid_response['selected_rows']
