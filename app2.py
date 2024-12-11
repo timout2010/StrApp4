@@ -176,6 +176,37 @@ def sanitize_table_name(name):
     """Sanitizes a string to be used as a valid table name by replacing or removing special characters."""
     return name.replace(' ', '_').replace(';', '').replace('(', '').replace(')', '').replace(',', '').replace('.', '').replace('-', '')
 
+def generate_GLtable_html(tablenname,filter ):
+    
+    with open("main.js", "r") as file:
+            main_js = file.read()
+    #filter=st.session_state.filter
+    return f"""
+        <!-- AG Grid Styles -->
+
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-grid.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-theme-alpine.css"
+    />
+
+    <div style="height: 500px; " id="myGrid" class="ag-theme-alpine">xx</div>
+    <!-- Define global variables -->
+        <script>
+            window.API_URL = "{API_URL_DATA}";
+            window.TABLE_NAME = "{tablenname}";
+            window.FILTER = "{filter}";
+        </script>
+        <!-- AG Grid Enterprise Script -->
+        <script src="https://cdn.jsdelivr.net/npm/ag-grid-enterprise/dist/ag-grid-enterprise.min.noStyle.js"></script>
+        <script>{main_js}</script>
+
+    """
+
+
 
 def main2(test_data,out_data):
     #st.set_page_config(page_title="General Ledger testing", layout="wide")
@@ -186,11 +217,11 @@ def main2(test_data,out_data):
 
    # local_css("style.css")
     tablename=sanitize_table_name(test_data['unique_file_name'])
-
+    #tablename="pocglcsv"
 #    test_data =test_data
     
                         
-                        
+                    
     
     num_cols = 3
     cards_per_row = num_cols
@@ -216,11 +247,20 @@ def main2(test_data,out_data):
         st.session_state.filter="none"
     
     # Get total number of records
-    total_records = get_total_records(tablename,st.session_state.filter)
+    #total_records = get_total_records(tablename,st.session_state.filter)
+    total_records =0
     print("Filter"+st.session_state.filter)
     print(total_records )
     if total_records == 0:
         st.stop()
+
+
+    glTable_html = generate_GLtable_html(tablename,st.session_state.filter)
+    st.components.v1.html(glTable_html , height=600)
+    
+
+
+
 
     total_pages = (total_records + page_size - 1) // page_size
 
@@ -228,26 +268,26 @@ def main2(test_data,out_data):
         
 
     # Fetch and display data using AgGrid
-    data = fetch_data(tablename,st.session_state.page, page_size,st.session_state.filter)
+    #data = fetch_data(tablename,st.session_state.page, page_size,st.session_state.filter)
     
     st.write(f"Displaying page {st.session_state.page} of {total_pages} (Total records: {total_records}) ")
     
-    # Configure AgGrid options
-    gb = GridOptionsBuilder.from_dataframe(data)
-    gb.configure_default_column(filterable=True, sortable=True, resizable=True)
-    gb.configure_selection(selection_mode='multiple', use_checkbox=True)
-    grid_options = gb.build()
+    # # Configure AgGrid options
+    # gb = GridOptionsBuilder.from_dataframe(data)
+    # gb.configure_default_column(filterable=True, sortable=True, resizable=True)
+    # gb.configure_selection(selection_mode='multiple', use_checkbox=True)
+    # grid_options = gb.build()
 
-    # Display data using AgGrid
-    grid_response = AgGrid(
-        data,
-        gridOptions=grid_options,
-        height=400,
-        width='100%',
-        update_mode=GridUpdateMode.SELECTION_CHANGED,
-        data_return_mode='FILTERED',
-        fit_columns_on_grid_load=True
-    )
+    # # Display data using AgGrid
+    # grid_response = AgGrid(
+    #     data,
+    #     gridOptions=grid_options,
+    #     height=400,
+    #     width='100%',
+    #     update_mode=GridUpdateMode.SELECTION_CHANGED,
+    #     data_return_mode='FILTERED',
+    #     fit_columns_on_grid_load=True
+    # )
 
     # Pagination controls under the table
     
@@ -301,29 +341,29 @@ def main2(test_data,out_data):
             cols[4].write("")
 
     # Handle row selection and display subtable
-    selected_rows = grid_response['selected_rows']
-    print("ROWS:"+str(selected_rows))
-    print(type(selected_rows))
-    if selected_rows is not None:
-        #st.write(selected_rows.get('journal_id'))
-        journalIds =  selected_rows['journalid'].tolist()
-        print (journalIds )
-        #journal_id= selected_row.get('journalid')  # Adjust 'id' to the column name that identifies the selected item
-        #posted_date= selected_row.get('enteredDateTime')  # Adjust 'id' to the column name that identifies the selected item
-        #posted_by= selected_row.get('enteredBy')  # Adjust 'id' to the column name that identifies the selected item
-        if journalIds is not None:
-            st.markdown(f"### journal_id:{journalIds}")
-            #with st.spinner("Loading.."):
-            subtable_data = fetch_subtable_data(tablename,st.session_state.filter,journalIds,"","")
-                #subtable_data = fetch_subtable_data(tablename,st.session_state.filter,journalIds,posted_date,posted_by)
-            if not subtable_data.empty:
-                st.dataframe(subtable_data)
-            else:
-                st.write("No data available for the selected item.")
-        else:
-            st.error("Selected row does not contain 'id' column.")
-    else:
-        st.write("Select a row to see related data in the subtable.")
+    # selected_rows = grid_response['selected_rows']
+    # print("ROWS:"+str(selected_rows))
+    # print(type(selected_rows))
+    # if selected_rows is not None:
+    #     #st.write(selected_rows.get('journal_id'))
+    #     journalIds =  selected_rows['journalid'].tolist()
+    #     print (journalIds )
+    #     #journal_id= selected_row.get('journalid')  # Adjust 'id' to the column name that identifies the selected item
+    #     #posted_date= selected_row.get('enteredDateTime')  # Adjust 'id' to the column name that identifies the selected item
+    #     #posted_by= selected_row.get('enteredBy')  # Adjust 'id' to the column name that identifies the selected item
+    #     if journalIds is not None:
+    #         st.markdown(f"### journal_id:{journalIds}")
+    #         #with st.spinner("Loading.."):
+    #         subtable_data = fetch_subtable_data(tablename,st.session_state.filter,journalIds,"","")
+    #             #subtable_data = fetch_subtable_data(tablename,st.session_state.filter,journalIds,posted_date,posted_by)
+    #         if not subtable_data.empty:
+    #             st.dataframe(subtable_data)
+    #         else:
+    #             st.write("No data available for the selected item.")
+    #     else:
+    #         st.error("Selected row does not contain 'id' column.")
+    # else:
+    #     st.write("Select a row to see related data in the subtable.")
 
 if __name__ == "__main__":
     main2(None)
