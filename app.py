@@ -25,7 +25,7 @@ from io import BytesIO
 import ast
 # Configuration
 #FUNCTION_BASE_URL = "http://localhost:7190/api" # e.g., https://<function-app>.azurewebsites.net/api/
-version="0.7a"
+version="0.8a"
 FUNCTION_BASE_URL = "https://alexfuncdoc.azurewebsites.net/api" # e.g., https://<function-app>.azurewebsites.net/api/
 
 GENERATE_SAS_TOKEN_ENDPOINT = f"{FUNCTION_BASE_URL}/GenerateSASToken"
@@ -1203,7 +1203,7 @@ def main():
             
             st.session_state['col_status']="in progress"
             st.session_state['test_data']['status_column']="in progess"
-            st.session_state['threadUpload']= threading.Thread(                target=poll_for_columns,                args=(st.session_state['test_data'],)                )       
+            st.session_state['threadUpload']= threading.Thread(target=poll_for_columns,args=(st.session_state['test_data'],)                )       
             st.session_state['threadUpload'].start()
             
             
