@@ -193,12 +193,15 @@ def generate_GLtable_html(tablenname,filter ):
       href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-theme-alpine.css"
     />
 
-    <div style="height: 500px; " id="myGrid" class="ag-theme-alpine"></div>
+    <div style="height: 400px; " id="myGrid" class="ag-theme-alpine"></div>
+    Sub table
+    <div style="height: 400px; " id="subGrid" class="ag-theme-alpine"></div>
     <!-- Define global variables -->
         <script>
             window.API_URL = "{API_URL_DATA}";
             window.TABLE_NAME = "{tablenname}";
             window.FILTER = "{filter}";
+            window.API_SUB_URL = "{API_URL_SUBTABLE}";
         </script>
         <!-- AG Grid Enterprise Script -->
         <script src="https://cdn.jsdelivr.net/npm/ag-grid-enterprise/dist/ag-grid-enterprise.min.noStyle.js"></script>
@@ -212,6 +215,8 @@ def main2(test_data,out_data):
     #st.set_page_config(page_title="General Ledger testing", layout="wide")
     remote_css(   "https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.css")
     print("Main2")
+
+    
     if test_data is None:
         test_data =test_data2
 
@@ -256,7 +261,7 @@ def main2(test_data,out_data):
     
     st.write(f"AG Grid enterprise edition")
     glTable_html = generate_GLtable_html(tablename,st.session_state.filter)
-    st.components.v1.html(glTable_html , height=600)
+    st.components.v1.html(glTable_html , height=900)
     
     
 
