@@ -2,8 +2,14 @@
 
 document.addEventListener('DOMContentLoaded', function () {
   // Configuration Constants
-  const API_URL = window.API_URL ;//'http://localhost:7190/api/GetPaginatedData';
-  const TABLE_NAME = window.TABLE_NAME;//'pocGLcsv';
+    //const API_URL = 'http://localhost:7190/api/GetPaginatedData';
+    //const API_SUB_URL = 'http://localhost:7190/api/GetSubtableData';
+    //const TABLE_NAME = 'pocGLcsv';
+
+
+    const API_URL = window.API_URL;//'http://localhost:7190/api/GetPaginatedData';
+    const API_SUB_URL = window.API_SUB_URL;
+    const TABLE_NAME = window.TABLE_NAME;//'pocGLcsv';
   const FILTER=	window.FILTER ;
   const PAGE_SIZE = 20; // Adjust as needed
 
@@ -24,20 +30,31 @@ document.addEventListener('DOMContentLoaded', function () {
     pagination: true,
     paginationPageSize: PAGE_SIZE,
     cacheBlockSize: PAGE_SIZE,
-    animateRows: true,
+      animateRows: true,
+      onSelectionChanged: onMainGridSelectionChanged,
   };
 
-  // Initialize the grid using createGrid and obtain the gridApi
+    const subGridOptions = {
+        columnDefs: [], // Will be set dynamically
+        defaultColDef: {
+            flex: 1,
+            minWidth: 100,
+            resizable: true,
+            sortable: true,
+            filter: true,
+        },
+        rowModelType: 'clientSide', // Assuming details are small
+        animateRows: true,
+        overlayLoadingTemplate: '<span class="custom-loading-overlay">Loading details...</span>',
+        overlayNoRowsTemplate: '<span class="custom-loading-overlay">No details to display.</span>',
+
+    };
+
   const eGridDiv = document.querySelector('#myGrid');
   const gridApi = agGrid.createGrid(eGridDiv, gridOptions);
 
-  // After the grid is created, initialize the grid data
   fetchColumnsAndInitializeGrid(gridApi);
 
-  /**
-   * Fetch column definitions from the server and initialize the grid.
-   * @param {GridApi} api - AG Grid's API instance.
-   */
   async function fetchColumnsAndInitializeGrid(api) {
     try {
       // Fetch the first page to get column definitions
@@ -61,7 +78,7 @@ document.addEventListener('DOMContentLoaded', function () {
       ) {
         throw new Error('Invalid response structure from API.');
       }
-     
+        api.setGridOption("rowSelection", {         mode: 'multiRow'     })
 	api.setGridOption("columnDefs",        result.columns.map((col) => ({
           field: col,
           sortable: true,
@@ -70,42 +87,20 @@ document.addEventListener('DOMContentLoaded', function () {
       );
 
 	
-      // Set column definitions based on response
-//      api.setColumnDefs(
- //       result.columns.map((col) => ({
-  //        field: col,
-   //       sortable: true,
-    //      filter: true,
-     //   }))
-      //);
-
-      // Create and set the server-side datasource
       const datasource = createServerSideDatasource(API_URL, TABLE_NAME, PAGE_SIZE);
       api.setGridOption("serverSideDatasource",datasource)
 //      api.setServerSideDatasource(datasource);
     } catch (error) {
-      console.error('Error initializing grid:', error);
-      alert('Failed to load grid data. Check console for details.');
+      console.error('Error initializing :', error);
+      alert('Failed  Check console for details.');
     }
   }
 
-  /**
-   * Creates a server-side datasource for AG Grid.
-   * @param {string} apiUrl - The API endpoint.
-   * @param {string} tableName - The table name parameter.
-   * @param {number} pageSize - Number of records per page.
-   * @returns {ServerSideDatasource} - The configured datasource.
-   */
   function createServerSideDatasource(apiUrl, tableName, pageSize) {
     return {
-      /**
-       * Fetches rows from the server based on AG Grid's request.
-       * @param {IServerSideGetRowsParams} params - Parameters from AG Grid.
-       */
       getRows: async function (params) {
         console.log('[Datasource] - rows requested by grid:', params.request);
 
-        // Calculate the page number
         const startRow = params.request.startRow;
         const endRow = params.request.endRow;
         const page = Math.floor(startRow / pageSize) + 1;
@@ -114,13 +109,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
           let sortParams = '';
           if (params.request.sortModel && params.request.sortModel.length > 0) {
-                    // Assuming single column sorting. For multiple, adjust accordingly.
+
                     const sortModel = params.request.sortModel[0];
                     sortParams = `&sortBy=${encodeURIComponent(sortModel.colId)}&sortOrder=${encodeURIComponent(sortModel.sort)}`;
           }
 	
-          // Construct the API URL with query parameters
-
 
           const url = `${apiUrl}?tablename=${encodeURIComponent(        tableName
           )}&page=${page}&pagesize=${pageSize}${sortParams}&filter=${FILTER}`;
@@ -133,7 +126,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
           const result = await response.json();
 
-          // Validate response structure
           if (
             !result.columns ||
             !Array.isArray(result.columns) ||
@@ -144,8 +136,6 @@ document.addEventListener('DOMContentLoaded', function () {
             throw new Error('Invalid response structure from API.');
           }
 
-          // Optionally, update columnDefs if columns might change dynamically
-          // Uncomment the following lines if your columns can change based on data
           /*
           api.setColumnDefs(
             result.columns.map((col) => ({
@@ -156,13 +146,95 @@ document.addEventListener('DOMContentLoaded', function () {
           );
           */
 	          params.success({ rowData: result.data ,rowCount:result.totalRows});	
-          // Pass the rows to AG Grid
-//          params.successCallback(result.data, result.totalRows);
         } catch (error) {
-          console.error('Error fetching rows:', error);
+          console.error('Error fetching :', error);
           params.failCallback();
         }
       },
     };
   }
+    // Event handler for main grid selection changes
+    async function onMainGridSelectionChanged(event) {
+        const selectedRows = event.api.getSelectedRows();
+        if (selectedRows.length === 0) {
+            // Clear the subtable if no rows are selected
+            gridsubApi.setGridOption("rowData", []);
+            return;
+        }
+
+        // Extract identifiers (e.g., IDs) from selected rows
+        const selectedIds = selectedRows.map(row => row.journalid); // Adjust 'id' based on your data
+        gridsubApi.showLoadingOverlay()
+        // Fetch details for selected IDs
+        try {
+
+            const detailsResponse = await fetch(
+                `${API_SUB_URL}?tablename=${encodeURIComponent(TABLE_NAME)}&journal_ids=${encodeURIComponent(selectedIds.join(','))}`
+            );
+
+            if (!detailsResponse.ok) {
+                throw new Error(`HTTP error! Status: ${detailsResponse.status}`);
+            }
+
+            const detailsResult = await detailsResponse.json();
+
+            // Validate details response structure
+            if (!detailsResult.data || !Array.isArray(detailsResult.data)) {
+                throw new Error('Invalid details response structure from API.');
+            }
+
+            // Populate the subtable
+            gridsubApi.setGridOption("columnDefs", detailsResult.columns.map((col) => ({
+                field: col,
+                sortable: true,
+                filter: true,
+            }))
+            );
+            gridsubApi.setGridOption("rowData", detailsResult.data);
+
+            //subGridOptions.api.setRowData(detailsResult.data);
+        } catch (error) {
+            console.error('Error fetching subtable data:', error);
+            alert('Failed to load subtable data. Check console for details.');
+        }
+    }
+
+
+
+    const eSubGridDiv = document.querySelector('#subGrid');
+    const gridsubApi = agGrid.createGrid(eSubGridDiv, subGridOptions);
+
+    
+    // Function to fetch and set subtable columns (Assuming API provides it)
+    async function initializeSubGridColumns() {
+        try {
+            // Fetch column definitions for details
+            //const response = await fetch(
+            //    `${API_SUB_URL}?tablename=${encodeURIComponent(TABLE_NAME)}`
+            //);
+
+            //if (!response.ok) {
+            //    throw new Error(`HTTP error! Status: ${response.status}`);
+            //}
+
+            //const columnsResult = await response.json();
+
+            //if (!columnsResult.columns || !Array.isArray(columnsResult.columns)) {
+            //    throw new Error('Invalid columns response structure for subtable.');
+            //}
+
+            //subGridOptions.api.setColumnDefs(columnsResult.columns.map(col => ({
+            //    field: col,
+            //    sortable: true,
+            //    filter: true,
+            //})));
+        } catch (error) {
+            console.error('Error initializing subtable columns:', error);
+            alert('Failed to initialize the subtable. Check console for details.');
+        }
+    }
+
+    // Initialize subtable columns on load
+    initializeSubGridColumns();
+
 });
