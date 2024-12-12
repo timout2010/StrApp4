@@ -25,7 +25,7 @@ from io import BytesIO
 import ast
 # Configuration
 #FUNCTION_BASE_URL = "http://localhost:7190/api" # e.g., https://<function-app>.azurewebsites.net/api/
-version="0.8a"
+version="0.85a"
 FUNCTION_BASE_URL = "https://alexfuncdoc.azurewebsites.net/api" # e.g., https://<function-app>.azurewebsites.net/api/
 
 GENERATE_SAS_TOKEN_ENDPOINT = f"{FUNCTION_BASE_URL}/GenerateSASToken"
@@ -1254,7 +1254,6 @@ def main():
         print("tab2")
         
         if 'summary' in st.session_state['out_data']:
-            
             main2(st.session_state['test_data'],st.session_state['out_data'])
         st.session_state['IsLoadedChartTab2'] = True   
     if st.button("."):
