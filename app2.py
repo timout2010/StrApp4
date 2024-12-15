@@ -5,6 +5,7 @@ FUNCTION_BASE_URL = "https://alexfuncdoc.azurewebsites.net/api" # e.g., https://
 API_URL_DATA = f"{FUNCTION_BASE_URL}/GetPaginatedData"
 API_URL_TOTAL_RECORDS = f"{FUNCTION_BASE_URL}/GetTotalRecords"
 API_URL_SUBTABLE = f"{FUNCTION_BASE_URL}/GetSubtableData"
+API_UR_PIVOT = f"{FUNCTION_BASE_URL}/RunSQL"
 
 
 test_data2 = {
@@ -217,20 +218,16 @@ def generate_Pivottable_html(tablenname,filter ):
     #filter=st.session_state.filter
     return f"""
       
-         <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-grid.css"
-    />
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-theme-alpine.css"
-    />
+         <link      rel="stylesheet"      href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-grid.css"    />
+        <link      rel="stylesheet"      href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-theme-alpine.css"    />
 
     <div style="height: 700px; " id="myPivotGrid" class="ag-theme-alpine"></div>
     <!-- Define global variables -->
         <script>
             window.API_URL = "{API_URL_DATA}";
             window.TABLE_NAME = "{tablenname}";
+            window.API_SUB_URL = "{API_URL_SUBTABLE}";
+            window.API_PIVOT_URL="{API_UR_PIVOT}";
             window.FILTER = "{filter}";
         </script>
         <!-- AG Grid Enterprise Script -->
@@ -253,7 +250,8 @@ def mainPivot(test_data,out_data):
 
    
     #tablename=sanitize_table_name(test_data['unique_file_name'])
-    tablename="pocGLcsv"
+    #tablename="pocGLcsv"
+    tablename=sanitize_table_name(test_data['unique_file_name'])
     st.write(f"AG Grid Pivoting enterprise edition")
     glTable_html = generate_Pivottable_html(tablename,"")
     # glTable_html = generate_Pivottable_html(tablename,st.session_state.filter)
