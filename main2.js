@@ -2,19 +2,18 @@
 
 document.addEventListener('DOMContentLoaded', function () {
   // Configuration Constants
-   // const API_URL = 'http://localhost:7190/api/GetPaginatedData';
-   // const API_SUB_URL = 'http://localhost:7190/api/GetSubtableData';
-    //const TABLE_NAME = 'pocGLcsv';
-   // const API_PIVOT_URL = 'http://localhost:7190/api/RunSQL';
+ //   const API_URL = 'http://localhost:7190/api/GetPaginatedData';
+//    const API_SUB_URL = 'http://localhost:7190/api/GetSubtableData';
+//    const TABLE_NAME = 'pocGLcsv';
+//    const API_PIVOT_URL = 'http://localhost:7190/api/RunSQL';
 
 
     const API_URL = window.API_URL;//'http://localhost:7190/api/GetPaginatedData';
     const API_SUB_URL = window.API_SUB_URL;
     const API_PIVOT_URL = window.API_PIVOT_URL;
     const TABLE_NAME = window.TABLE_NAME;//'pocGLcsv';
-    
-  const FILTER=	window.FILTER ;
-  const PAGE_SIZE = 20; // Adjust as needed
+    const FILTER=	window.FILTER ;
+    const PAGE_SIZE = 20; // Adjust as needed
 
   // Grid Options
 
