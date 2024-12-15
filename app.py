@@ -191,7 +191,8 @@ def fetch_data(tablename,page, page_size,filter):
         df = df[columns]
         return df
     else:
-        st.error("Error fetching data")
+        
+        st.error("Error fetching data"+str(response))
         return pd.DataFrame()
     
 @st.cache_data
@@ -1090,7 +1091,7 @@ def DisplayCard(test_data):
                     <div class="card">
                         <div class="{get_risk_class("d")}">
                             <div class="header">{row_data['name']}</div>
-                            <div class="meta">Risk Level</div>
+                            <div class="meta">Test name</div>
                         </div>
                         <div class="kpi">
                             <div class="metric">
