@@ -182,6 +182,7 @@ def fetch_data(tablename,page, page_size,filter):
         'filter':filter
         
     }
+    st.info(API_URL_DATA)
     response = requests.get(API_URL_DATA, params=params)
     if response.status_code == 200:
         result = response.json()
