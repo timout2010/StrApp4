@@ -6,6 +6,7 @@ from tarfile import NUL
 from typing import Type
 #from turtle import width
 from app2 import main2
+from app2 import mainPivot
 import threading
 import streamlit as st
 import requests
@@ -25,7 +26,7 @@ from io import BytesIO
 import ast
 # Configuration
 #FUNCTION_BASE_URL = "http://localhost:7190/api" # e.g., https://<function-app>.azurewebsites.net/api/
-version="0.85a"
+version="0.9a"
 FUNCTION_BASE_URL = "https://alexfuncdoc.azurewebsites.net/api" # e.g., https://<function-app>.azurewebsites.net/api/
 
 GENERATE_SAS_TOKEN_ENDPOINT = f"{FUNCTION_BASE_URL}/GenerateSASToken"
@@ -1231,7 +1232,7 @@ def main():
         print("Try to DisplayCard")
         DisplayCard(st.session_state['test_data']) 
     st.markdown(f"### {st.session_state.get('filter','')}")
-    tab1, tab2 = st.tabs(["📈 Chart", "🗃 Tables"])
+    tab1, tab2 ,tab3= st.tabs(["📈 Chart", "🗃 Tables","📊 Pivot table"])
     print("IsLoadedChart: "+str(st.session_state.IsLoadedChart)+str(st.session_state['IsLoadedChartTab1']))
     
     with tab1:
@@ -1256,6 +1257,14 @@ def main():
         if 'summary' in st.session_state['out_data']:
             main2(st.session_state['test_data'],st.session_state['out_data'])
         st.session_state['IsLoadedChartTab2'] = True   
+    with tab3:
+        print("tab3")
+        
+        if 'summary' in st.session_state['out_data']:
+            mainPivot(st.session_state['test_data'],st.session_state['out_data'])
+        # st.session_state['IsLoadedChartTab2'] = True   
+        
+
     if st.button("."):
         print(st.session_state['test_data'])
         
