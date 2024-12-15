@@ -185,14 +185,7 @@ def generate_GLtable_html(tablenname,filter ):
     return f"""
         <!-- AG Grid Styles -->
 
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-grid.css"
-    />
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-theme-alpine.css"
-    />
+    
 
     <div style="height: 400px; " id="myGrid" class="ag-theme-alpine"></div>
     Sub table
@@ -218,8 +211,7 @@ def generate_Pivottable_html(tablenname,filter ):
     #filter=st.session_state.filter
     return f"""
       
-         <link      rel="stylesheet"      href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-grid.css"    />
-        <link      rel="stylesheet"      href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-theme-alpine.css"    />
+         
 
     <div style="height: 700px; " id="myPivotGrid" class="ag-theme-alpine"></div>
     <!-- Define global variables -->
@@ -243,7 +235,7 @@ def mainPivot(test_data,out_data):
     #st.set_page_config(page_title="General Ledger testing", layout="wide")
     
     
-
+    
     
     if test_data is None:
         test_data =test_data2
