@@ -210,7 +210,56 @@ def generate_GLtable_html(tablenname,filter ):
     """
 
 
+def generate_Pivottable_html(tablenname,filter ):
+    
+    with open("main2.js", "r") as file:
+            main_js = file.read()
+    #filter=st.session_state.filter
+    return f"""
+      
+         <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-grid.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-theme-alpine.css"
+    />
 
+    <div style="height: 700px; " id="myPivotGrid" class="ag-theme-alpine"></div>
+    <!-- Define global variables -->
+        <script>
+            window.API_URL = "{API_URL_DATA}";
+            window.TABLE_NAME = "{tablenname}";
+            window.FILTER = "{filter}";
+        </script>
+        <!-- AG Grid Enterprise Script -->
+        <script src="https://cdn.jsdelivr.net/npm/ag-grid-enterprise/dist/ag-grid-enterprise.min.noStyle.js"></script>
+        <script>{main_js}</script>
+
+
+
+    """
+
+
+def mainPivot(test_data,out_data):
+    #st.set_page_config(page_title="General Ledger testing", layout="wide")
+    
+    
+
+    
+    if test_data is None:
+        test_data =test_data2
+
+   
+    #tablename=sanitize_table_name(test_data['unique_file_name'])
+    tablename="pocGLcsv"
+    st.write(f"AG Grid Pivoting enterprise edition")
+    glTable_html = generate_Pivottable_html(tablename,"")
+    # glTable_html = generate_Pivottable_html(tablename,st.session_state.filter)
+    
+    st.components.v1.html(glTable_html , height=900)
+    
 def main2(test_data,out_data):
     #st.set_page_config(page_title="General Ledger testing", layout="wide")
     remote_css(   "https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.css")
