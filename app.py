@@ -1141,11 +1141,15 @@ def main():
 
     # Page Configuration
     st.set_page_config(page_title="General Ledger testing ", layout="wide")
-    local_css("style.css")    
-    st.markdown(f"""
-            <link      rel="stylesheet"      href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-grid.css"    />
-            <link      rel="stylesheet"      href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-theme-alpine.css"    />
-                """);
+    local_css("style.css")   
+#     st.components.v1.html(
+#     """
+#     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-grid.css">
+#     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-theme-alpine.css">
+#     """,
+#     height=0,  # No visible height
+#     width=0    # No visible width
+# )
     st.markdown("<img src='https://cdn.wolterskluwer.io/wk/fundamentals/1.15.2/logo/assets/medium.svg' alt='Wolters Kluwer Logo' width='190px' height='31px'>", unsafe_allow_html=True)
     st.title("General Ledger testing v"+version)
     init()
