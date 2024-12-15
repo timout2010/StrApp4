@@ -1226,11 +1226,7 @@ def main():
         
     st.subheader("Select Tests to Run")
        
-    account_df= fetch_data("accounts_type",1, 1,"")
-            
-    account_type = st.multiselect("Filter by Account Type", options=account_df["accountType"].unique(), default=None)
-    subtype = st.multiselect("Filter by Subtype", options=account_df["accountSubType"].unique(), default=None)
-
+    
     display_tableTests()
     
     if 'summary' in st.session_state['out_data']:   
