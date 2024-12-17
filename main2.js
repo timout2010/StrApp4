@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', function () {
             // restrict what aggregation functions the columns can have,
             // include a custom function 'random' that just returns a
             // random number
-            allowedAggFuncs: ["sum", "min", "max"],
+            allowedAggFuncs: ["sum", "min", "max","count"],
             filter: true,
         },
         autoGroupColumnDef: {
