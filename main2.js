@@ -2,9 +2,9 @@
 
 document.addEventListener('DOMContentLoaded', function () {
   // Configuration Constants
- //   const API_URL = 'http://localhost:7190/api/GetPaginatedData';
+//   const API_URL = 'http://localhost:7190/api/GetPaginatedData';
 //    const API_SUB_URL = 'http://localhost:7190/api/GetSubtableData';
-//    const TABLE_NAME = 'pocGLcsv';
+//   const TABLE_NAME = 'pocGLcsv';
 //    const API_PIVOT_URL = 'http://localhost:7190/api/RunSQL';
 
 
@@ -29,25 +29,55 @@ document.addEventListener('DOMContentLoaded', function () {
         defaultColDef: {
             flex: 1,
             minWidth: 150,
-            // restrict what aggregation functions the columns can have,
-            // include a custom function 'random' that just returns a
-            // random number
-            allowedAggFuncs: ["sum", "min", "max","count"],
+            allowedAggFuncs: ["sum", "min", "max", "count"],
             filter: true,
         },
         autoGroupColumnDef: {
             width: 180,
         },
-        /*columnDefs: columnDefs,*/
         rowModelType: "serverSide",
         rowGroupPanelShow: "always",
         pivotPanelShow: "always",
-        sideBar: true,
-	pivotRowTotals:"after",
+        sideBar: {
+            toolPanels: [
+                {
+                    id: 'columns',
+                    labelKey: 'columns',
+                    labelDefault: 'Columns',
+                    iconKey: 'columns',
+                    toolPanel: 'agColumnsToolPanel',
+                },
+                {
+                    id: 'filters',
+                    labelKey: 'filters',
+                    labelDefault: 'Filters',
+                    iconKey: 'filter',
+                    toolPanel: 'agFiltersToolPanel',
+                },
+                {
+                    id: 'pivot',
+                    labelKey: 'pivot',
+                    labelDefault: 'Pivot',
+                    iconKey: 'pivot',
+                    toolPanel: 'agPivotToolPanel',
+                },
+                {
+                    id: 'charts',
+                    labelKey: 'charts',
+                    labelDefault: 'Charts',
+                    iconKey: 'charts',
+                    toolPanel: 'agChartsToolPanel',
+                },
+            ],
+        },
+        pivotRowTotals: "after",
         maxConcurrentDatasourceRequests: 1,
         maxBlocksInCache: 2,
-	pivotMode:true,
+        pivotMode: true,
         purgeClosedRowNodes: true,
+        enableCharts: true,
+        enableRangeSelection: true,
+        chartThemes: ['ag-default', 'ag-pastel', 'ag-material', 'ag-vivid'],
     };
 
 
