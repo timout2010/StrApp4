@@ -14,6 +14,7 @@ import pandas as pd
 import json
 import streamlit_highcharts as hct
 import asyncio
+
 import streamlit as st
 from azure.storage.blob import BlobServiceClient
 import requests
@@ -25,7 +26,7 @@ from io import BytesIO
 import ast
 # Configuration
 #FUNCTION_BASE_URL = "http://localhost:7190/api" # e.g., https://<function-app>.azurewebsites.net/api/
-version="0.9a"
+version="0.91a"
 FUNCTION_BASE_URL = "https://alexfuncdoc.azurewebsites.net/api" # e.g., https://<function-app>.azurewebsites.net/api/
 
 GENERATE_SAS_TOKEN_ENDPOINT = f"{FUNCTION_BASE_URL}/GenerateSASToken"
@@ -270,7 +271,8 @@ def extract_columns( file_name,file_nameCA):
         
         "FileName": file_name,
         "FileNameCA":file_nameCA,
-        "DatabricksJobId": 447087718645534
+         "DatabricksJobId": 447087718645534 #old
+        #"DatabricksJobId": 447087718645534
     }
 
     headers = {"Content-Type": "application/json"}
@@ -441,8 +443,9 @@ def poll_for_columns(test_data, polling_interval=2, max_attempts=30):
                     "ContainerName": "uploads",
                     "FileName": test_data['unique_file_name'],
                     "FileNameCA":  test_data.get('unique_file_nameCA', ""),
-                    "SelectedColumns": "",  # To be updated after column selection
-                    "DatabricksJobId": 447087718645534  # Your Databricks job ID
+                    "SelectedColumns": "",  
+                     "DatabricksJobId": 447087718645534  #old
+                    #"DatabricksJobId": 447087718645534
                 }
     instance_id= extract_columns(test_data['unique_file_name'],test_data.get('unique_file_nameCA', ""))
     print("poll for coll"+instance_id)
@@ -472,6 +475,8 @@ def poll_for_chart(test_data,out_data, polling_interval=3, max_attempts=60):
     input_data={}
     
 
+    
+    #input_data['DatabricksJobId']=488644182429847 #Chart old
     input_data['DatabricksJobId']=822693125667863 #Chart
     input_data['FileName']=test_data['unique_file_name']
     
@@ -514,7 +519,9 @@ def poll_for_chart(test_data,out_data, polling_interval=3, max_attempts=60):
 def poll_for_task(test_data,out_data, polling_interval=3, max_attempts=60):
     summary= []
     input_data={}
-    input_data['DatabricksJobId']=861358873659712 #BenfordRun
+    input_data['DatabricksJobId']=861358873659712 #old
+    #input_data['DatabricksJobId']=58242941415312 #
+    
     input_data['FileName']=test_data['unique_file_name']
     input_data['Params']= json.dumps(test_data)
     
@@ -601,14 +608,16 @@ def load_data_from_blob(sas_url):
 
 
 @st.cache_data
-def load_chart(filter, polling_interval=2, max_attempts=30):
-    test_data=st.session_state['test_dataChart']
-    print("Loading chart "+str(filter))
-    if str(filter) =="none" :
+def load_chart(test_data, filter, polling_interval=2, max_attempts=30):
+    
+    #test_data=st.session_state['test_dataChart']
+    print("!!Loading chart "+str(filter))
+    if str(filter) =="none" and 'filtered_df' not in test_data :
+        
         return st.session_state['out_data']['summary']
     input_data={}
 
-    input_data['DatabricksJobId']=822693125667863 #Chart
+    input_data['DatabricksJobId']=822693125667863 #Chart old
     input_data['FileName']=test_data['unique_file_name']
     input_data['Filter']=filter
     input_data['Params']= json.dumps(test_data)
@@ -678,7 +687,7 @@ def DisplayChart():
                 #st.session_state['test_dataChart']={}
                 
                 st.session_state['test_dataChart']["filtered_df"]=filtered_df["glAccountNumber"].to_list()
-                st.session_state['out_data']['summary']=load_chart(st.session_state.filter)
+                st.session_state['out_data']['summary']=load_chart(st.session_state['test_dataChart'],st.session_state.get("filter","none"))
                 
         
                 
@@ -697,7 +706,7 @@ def createChart1(out_data):
 #    test_data=st.session_state['test_data']
     #print(out_data)
     chart1url= out_data['summary']['chart1url']
-    
+    print("createChart1")
     data = load_data_from_blob(chart1url)
     df = pd.DataFrame(data)
     st.subheader("Visualization 1: High-Risk Journals Per Month")
@@ -1251,7 +1260,7 @@ def main():
         
         if( 'summary' in st.session_state['out_data']):
             print("try to load chart1"+str(st.session_state.get("filter","None")))
-            st.session_state['out_data']['summary']=load_chart(st.session_state.get("filter","none"))
+            st.session_state['out_data']['summary']=load_chart(st.session_state['test_dataChart'],st.session_state.get("filter","none"))
 
         if(st.session_state['out_data']):
             print("Chart try1 ")
@@ -1267,7 +1276,8 @@ def main():
         st.session_state['IsLoadedChartTab2'] = True   
     with tab3:
         print("tab3")
-        #mainPivot("","")
+        #st.session_state['test_data']['unique_file_name']="pocglcsv"
+        #mainPivot(st.session_state['test_data'],"")
         
         if 'summary' in st.session_state['out_data']:
             mainPivot(st.session_state['test_data'],st.session_state['out_data'])
