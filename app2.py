@@ -1,4 +1,4 @@
-# Azure Function endpoints
+    # Azure Function endpoints
 #FUNCTION_BASE_URL = "http://localhost:7190/api" # e.g., https://<function-app>.azurewebsites.net/api/
 FUNCTION_BASE_URL = "https://alexfuncdoc.azurewebsites.net/api" # e.g., https://<function-app>.azurewebsites.net/api/
 
@@ -223,7 +223,10 @@ def generate_Pivottable_html(tablenname,filter ):
             window.FILTER = "{filter}";
         </script>
         <!-- AG Grid Enterprise Script -->
-        <script src="https://cdn.jsdelivr.net/npm/ag-grid-enterprise/dist/ag-grid-enterprise.min.noStyle.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/ag-charts-enterprise@11.0.0/dist/umd/ag-charts-enterprise.min.js?t=1734371293200"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ag-grid-enterprise@33.0.2/dist/ag-grid-enterprise.min.js?t=1734371293200"></script>
+
+
         <script>{main_js}</script>
 
 
