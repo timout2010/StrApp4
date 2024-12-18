@@ -434,7 +434,7 @@ def display_tableTests():
             st.text(locale.currency(test["sumAmount"], grouping=True))
     
 
-def poll_for_columns(test_data, polling_interval=2, max_attempts=30):
+def poll_for_columns(test_data, polling_interval=2, max_attempts=60):
     columns = []
     # print("start 1")
     
