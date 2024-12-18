@@ -434,7 +434,7 @@ def display_tableTests():
             st.text(locale.currency(test["sumAmount"], grouping=True))
     
 
-def poll_for_columns(test_data, polling_interval=2, max_attempts=1120):
+def poll_for_columns(test_data, polling_interval=4, max_attempts=1120):
     columns = []
     # print("start 1")
     
@@ -470,7 +470,7 @@ def poll_for_columns(test_data, polling_interval=2, max_attempts=1120):
         # st.session_state['polling_status'] = "failed"
         test_data["status_column"]="Failed"
 
-def poll_for_chart(test_data,out_data, polling_interval=3, max_attempts=1120):
+def poll_for_chart(test_data,out_data, polling_interval=4, max_attempts=1120):
     summary= []
     input_data={}
     
@@ -516,7 +516,7 @@ def poll_for_chart(test_data,out_data, polling_interval=3, max_attempts=1120):
         else:
             test_data["status"]="in_progress"
 
-def poll_for_task(test_data,out_data, polling_interval=3, max_attempts=1120):
+def poll_for_task(test_data,out_data, polling_interval=10, max_attempts=1120):
     summary= []
     input_data={}
     input_data['DatabricksJobId']=861358873659712 #old
