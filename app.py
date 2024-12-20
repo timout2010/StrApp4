@@ -24,10 +24,10 @@ import time
 from PIL import Image
 from io import BytesIO
 import ast
-# Configuration
-#FUNCTION_BASE_URL = "http://localhost:7190/api" # e.g., https://<function-app>.azurewebsites.net/api/
-version="0.921a"
-FUNCTION_BASE_URL = "https://alexfuncdoc.azurewebsites.net/api" # e.g., https://<function-app>.azurewebsites.net/api/
+# Configuration№
+# FUNCTION_BASE_URL = "http://localhost:7190/api" # e.g., https://<function-app>.azurewebsites.net/api/
+version="0.93a"
+FUNCTION_BASE_URL = "https://glauditazurefuntion.azurewebsites.net/api" # e.g., https://<function-app>.azurewebsites.net/api/
 
 GENERATE_SAS_TOKEN_ENDPOINT = f"{FUNCTION_BASE_URL}/GenerateSASToken"
 START_ORCHESTRATOR_ENDPOINT = f"{FUNCTION_BASE_URL}/start-orchestrator"
@@ -35,9 +35,10 @@ EXTRACT_COLUMNS_ENDPOINT = f"{FUNCTION_BASE_URL}/start-column-extraction"  # New
 CHECK_JOB_STATUS_ENDPOINT = f"{FUNCTION_BASE_URL}/check-job-status"
 API_URL_DATA = f"{FUNCTION_BASE_URL}/GetPaginatedData"
 API_URL_DOWNLOAD = f"{FUNCTION_BASE_URL}/DownloadTableCsv"
-storage_connection_string="DefaultEndpointsProtocol=https;AccountName=vsstoragelake;AccountKey=uxCGrVpPSWf5lJRgCc8YAzkyoXONMvOcYtC2N0cfcCbriOYwNNBHA6wMU+oiUmcN4Hgc0gr3ZCO7+AStzZMAlw==;EndpointSuffix=core.windows.net"
-storage_account = "vsstoragelake"
+storage_connection_string="DefaultEndpointsProtocol=https;AccountName=zuscutaargpletoaudi9020;AccountKey=i2Fs+bpmHyCWzk/lwpkclGW6gWaGQumksWbQgjDmverFwG+O/lmz1aTTvHxawzyT+rRDfxw3DKQ9+ASt8RFXow==;EndpointSuffix=core.windows.net"
+storage_account = "zuscutaargpletoaudi9020"
 container = "testcontainer"
+
 
 class Task:
     def __init__(self, id):
