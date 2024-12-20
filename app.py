@@ -695,11 +695,13 @@ def DisplayChart():
     with right_col:
         print("Display1")
         if( 'summary' in st.session_state['out_data']):
-            print("Display2")
-            createChart4(st.session_state['out_data'])
-            createChart1(st.session_state['out_data'])
-            createChart2(st.session_state['out_data'])
-            createChart3(st.session_state['out_data'])
+            col1, col2 = st.columns(2)
+            with col1:
+                createChart4(st.session_state['out_data'])
+                createChart1(st.session_state['out_data'])
+            with col2:
+                createChart2(st.session_state['out_data'])
+                createChart3(st.session_state['out_data'])
             
 
 def createChart1(out_data):
@@ -748,7 +750,7 @@ def createChart1(out_data):
         """
 
         # Render the chart in Streamlit
-        st.components.v1.html(html_code, height=500)
+        st.components.v1.html(html_code, height=600)
     else:
         st.info("Chart is empty or data is invalid.")
 
@@ -825,7 +827,7 @@ def createChart2(out_data):
 
         # Render the HTML/JavaScript in Streamlit
         st.write("### Stacked Column Chart: Risk Journals per Account")
-        st.components.v1.html(html_code, height=500)
+        st.components.v1.html(html_code, height=600)
 
     except Exception as e:
         st.error(f"An error occurred while creating the chart: {e}")
@@ -1039,8 +1041,8 @@ def createChart4(out_data):
     chart_title    ="xx"
 # Highcharts configuration
     data = build_hierarchy(df)
-    
-    st.title("General Ledger Account Hierarchy")
+    st.write("### General Ledger Account Hierarchy")
+    #st.title("General Ledger Account Hierarchy")
     sunburst_html = generate_sunburst_html(data )
     st.components.v1.html(sunburst_html, height=600)
 
