@@ -696,10 +696,11 @@ def DisplayChart():
         print("Display1")
         if( 'summary' in st.session_state['out_data']):
             print("Display2")
+            createChart4(st.session_state['out_data'])
             createChart1(st.session_state['out_data'])
             createChart2(st.session_state['out_data'])
             createChart3(st.session_state['out_data'])
-            createChart4(st.session_state['out_data'])
+            
 
 def createChart1(out_data): 
     
