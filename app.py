@@ -26,7 +26,7 @@ from io import BytesIO
 import ast
 # Configuration№
 # FUNCTION_BASE_URL = "http://localhost:7190/api" # e.g., https://<function-app>.azurewebsites.net/api/
-version="0.931a"
+version="0.932a"
 FUNCTION_BASE_URL = "https://glauditazurefuntion.azurewebsites.net/api" # e.g., https://<function-app>.azurewebsites.net/api/
 
 GENERATE_SAS_TOKEN_ENDPOINT = f"{FUNCTION_BASE_URL}/GenerateSASToken"
@@ -38,7 +38,6 @@ API_URL_DOWNLOAD = f"{FUNCTION_BASE_URL}/DownloadTableCsv"
 storage_connection_string="DefaultEndpointsProtocol=https;AccountName=zuscutaargpletoaudi9020;AccountKey=i2Fs+bpmHyCWzk/lwpkclGW6gWaGQumksWbQgjDmverFwG+O/lmz1aTTvHxawzyT+rRDfxw3DKQ9+ASt8RFXow==;EndpointSuffix=core.windows.net"
 storage_account = "zuscutaargpletoaudi9020"
 container = "testcontainer"
-
 
 class Task:
     def __init__(self, id):
@@ -272,8 +271,8 @@ def extract_columns( file_name,file_nameCA):
         
         "FileName": file_name,
         "FileNameCA":file_nameCA,
-         "DatabricksJobId": 447087718645534 #old
-        #"DatabricksJobId": 447087718645534
+         #"DatabricksJobId": 447087718645534 #old
+        "DatabricksJobId": 775618648147406
     }
 
     headers = {"Content-Type": "application/json"}
@@ -445,8 +444,8 @@ def poll_for_columns(test_data, polling_interval=4, max_attempts=1120):
                     "FileName": test_data['unique_file_name'],
                     "FileNameCA":  test_data.get('unique_file_nameCA', ""),
                     "SelectedColumns": "",  
-                     "DatabricksJobId": 447087718645534  #old
-                    #"DatabricksJobId": 447087718645534
+                     #"DatabricksJobId": 447087718645534  #old
+                    "DatabricksJobId": 447087718645534
                 }
     instance_id= extract_columns(test_data['unique_file_name'],test_data.get('unique_file_nameCA', ""))
     print("poll for coll"+instance_id)
@@ -520,8 +519,8 @@ def poll_for_chart(test_data,out_data, polling_interval=4, max_attempts=1120):
 def poll_for_task(test_data,out_data, polling_interval=10, max_attempts=1120):
     summary= []
     input_data={}
-    input_data['DatabricksJobId']=861358873659712 #old
-    #input_data['DatabricksJobId']=58242941415312 #
+    #input_data['DatabricksJobId']=861358873659712 #old
+    input_data['DatabricksJobId']=58242941415312 #
     
     input_data['FileName']=test_data['unique_file_name']
     input_data['Params']= json.dumps(test_data)
@@ -618,7 +617,8 @@ def load_chart(test_data, filter, polling_interval=2, max_attempts=1120):
         return st.session_state['out_data']['summary']
     input_data={}
 
-    input_data['DatabricksJobId']=822693125667863 #Chart old
+    #input_data['DatabricksJobId']=822693125667863 #Chart old
+    input_data['DatabricksJobId']=488644182429847 #Chart 
     input_data['FileName']=test_data['unique_file_name']
     input_data['Filter']=filter
     input_data['Params']= json.dumps(test_data)
@@ -709,6 +709,7 @@ def createChart1(out_data):
     chart1url= out_data['summary']['chart1url']
     print("createChart1")
     data = load_data_from_blob(chart1url)
+    print(chart1url)
     df = pd.DataFrame(data)
     st.subheader("Visualization 1: High-Risk Journals Per Month")
     if len(df)>0:
@@ -751,6 +752,7 @@ def createChart2(out_data ):
 
     # Prepare data for HighCharts
     categories = sorted(risk_per_account_df['glAccountNumber'].unique().tolist())  # Sorted order for accounts
+    print(risk_per_account_df['risk_label'])
     risks = sorted(risk_per_account_df['risk_label'].unique().tolist())  # Sorted risks
 
     # Create series data for HighCharts
@@ -1016,6 +1018,7 @@ def DisplayCard(test_data):
     
     out_data=st.session_state['out_data']
     print("DisplCard0")
+
     chart3url= out_data['summary']['chart3url']
     
     if  "cards_data" not in st.session_state:
