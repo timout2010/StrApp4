@@ -4,7 +4,6 @@ import locale
 from collections import namedtuple
 from tarfile import NUL
 from typing import Type
-from streamlit_highcharts import st_highcharts
 #from turtle import width
 from app2 import main2
 from app2 import mainPivot
@@ -330,7 +329,7 @@ def create_chart():
             'series': series
         }
 
-        st_highcharts(options)
+        hct.streamlit_highcharts(options)
         st.dataframe(df)
     else:
         st.error("No data to display")
@@ -733,7 +732,7 @@ def createChart1(out_data):
         }
         st.subheader("High-Risk Journals Per Month")
         #st.highcharts(line_chart_config)
-        st_highcharts(line_chart_config)
+        hct.streamlit_highcharts(line_chart_config)
     else:
        st.info("Chart is empty") 
 
@@ -799,7 +798,7 @@ def createChart2(out_data ):
 
     # Render the chart in Streamlit using streamlit_highcharts
     st.write("### Stacked Column Chart: Risk Journals per Account")
-    st_highcharts(chart_options)
+    hct.streamlit_highcharts(chart_options)
 
 
 def createChart3(out_data):
@@ -837,7 +836,7 @@ def createChart3(out_data):
     # Render the chart in Streamlit
     st.title("Risk Distribution Pie Chart")
     
-    st_highcharts(chart_config)
+    hct.streamlit_highcharts(chart_config)
 
 
 def build_hierarchy(df):
