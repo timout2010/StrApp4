@@ -702,143 +702,185 @@ def DisplayChart():
             createChart3(st.session_state['out_data'])
             
 
-def createChart1(out_data): 
-    
-
-#    test_data=st.session_state['test_data']
-    #print(out_data)
-    chart1url= out_data['summary']['chart1url']
-    print("createChart1")
+def createChart1(out_data):
+    # Load data from the blob
+    chart1url = out_data['summary']['chart1url']
+    #st.write(f"Data source URL: {chart1url}")
     data = load_data_from_blob(chart1url)
-    print(chart1url)
     df = pd.DataFrame(data)
+
     st.subheader("Visualization 1: High-Risk Journals Per Month")
-    if len(df)>0:
-    
-    # Create charts using HighCharts
-    
-        line_chart_config = {
-        'chart': {'type': 'line'},
-        'title': {'text': 'High-Risk Journals Per Month'},
-        'xAxis': {
-            'categories': df['month'].tolist()
-        },
-        'yAxis': {
-            'title': {'text': 'Count of High-Risk Journals'}
-        },
-        'series': [{
-            'name': 'High Risk',
-            'data': df['high_risk_count'].tolist()
-        }]
-        }
-        st.subheader("High-Risk Journals Per Month")
-        #st.highcharts(line_chart_config)
-        hct.streamlit_highcharts(line_chart_config)
+
+    # Check if data is valid
+    if len(df) > 0 and 'month' in df.columns and 'high_risk_count' in df.columns:
+        # Prepare data for JavaScript
+        categories = df['month'].tolist()
+        data_points = df['high_risk_count'].tolist()
+
+        # JavaScript + HTML for Highcharts
+        html_code = f"""
+        <div id="container" style="width: 100%; height: 400px;"></div>
+        <script src="https://code.highcharts.com/highcharts.js"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {{
+                Highcharts.chart('container', {{
+                    chart: {{
+                        type: 'line'
+                    }},
+                    title: {{
+                        text: 'High-Risk Journals Per Month'
+                    }},
+                    xAxis: {{
+                        categories: {categories}
+                    }},
+                    yAxis: {{
+                        title: {{
+                            text: 'Count of High-Risk Journals'
+                        }}
+                    }},
+                    series: [{{
+                        name: 'High Risk',
+                        data: {data_points}
+                    }}]
+                }});
+            }});
+        </script>
+        """
+
+        # Render the chart in Streamlit
+        st.components.v1.html(html_code, height=500)
     else:
-       st.info("Chart is empty") 
+        st.info("Chart is empty or data is invalid.")
 
-def createChart2(out_data ):
-    ##test_data=st.session_state['test_data']
-    # print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
-    # print(test_data)
-    
-    chart1url= out_data['summary']['chart2url']
-    #chart1url="https://vsstoragelake.blob.core.windows.net/results/csv/risk_per_account/part-00000-tid-6608563947994153681-0a40edf0-9fc8-4f2e-87ea-571bcd46ce61-746-1-c000.csv?se=2024-12-05T11%3A12%3A31Z&sp=r&sv=2023-11-03&sr=b&sig=ItGWiAikVyMFYfmdtI81ysEAJFu7z730hQLXbFYKDa8%3D"
-    #print(chart1url )
-    data = load_data_from_blob(chart1url)
-    risk_per_account_df = pd.DataFrame(data)
+def createChart2(out_data):
+    try:
+        # Load data from the blob URL
+        chart2url = out_data['summary']['chart2url']
+        #st.write(f"Data source URL: {chart2url}")  # Display the URL for debugging
+        data = load_data_from_blob(chart2url)  # Ensure this function works correctly
+        risk_per_account_df = pd.DataFrame(data)
 
-    # Ensure the data type of 'risk_count' is a native Python int
-    risk_per_account_df['risk_count'] = risk_per_account_df['risk_count'].astype(int)
+        # Validate the DataFrame
+        if len(risk_per_account_df) == 0 or 'glAccountNumber' not in risk_per_account_df.columns or 'risk_label' not in risk_per_account_df.columns or 'risk_count' not in risk_per_account_df.columns:
+            st.info("The dataset does not contain valid data for the chart.")
+            return
 
-    # Prepare data for HighCharts
-    categories = sorted(risk_per_account_df['glAccountNumber'].unique().tolist())  # Sorted order for accounts
-    print(risk_per_account_df['risk_label'])
-    risks = sorted(risk_per_account_df['risk_label'].unique().tolist())  # Sorted risks
+        # Ensure 'risk_count' is a numeric type
+        risk_per_account_df['risk_count'] = risk_per_account_df['risk_count'].astype(int)
 
-    # Create series data for HighCharts
-    series = []
-    for risk in risks:
-        data = []
-        for account in categories:
-            # Sum up risk_count for each account and risk
-            count = risk_per_account_df[
-                (risk_per_account_df['glAccountNumber'] == account) & (risk_per_account_df['risk_label'] == risk)
-            ]['risk_count'].sum()
-            data.append(int(count))  # Ensure native Python int
-        series.append({'name': risk, 'data': data})
+        # Prepare data for JavaScript
+        categories = sorted(risk_per_account_df['glAccountNumber'].unique().tolist())
+        risks = sorted(risk_per_account_df['risk_label'].unique().tolist())
 
-    # HighCharts configuration
-    chart_options = {
-        'chart': {
-            'type': 'column'
-        },
-        'title': {
-            'text': 'Risk Journals per Account'
-        },
-        'xAxis': {
-            'categories': categories,  # Accounts on the x-axis
-            'title': {
-                'text': 'Accounts'
-            }
-        },
-        'yAxis': {
-            'min': 0,
-            'title': {
-                'text': 'Risk Count',
-                'align': 'high'
-            }
-        },
-        'plotOptions': {
-            'column': {
-                'stacking': 'normal'  # Enable stacking
-            }
-        },
-        'series': series
-    }
+        # Prepare series for Highcharts
+        series = []
+        for risk in risks:
+            data = []
+            for account in categories:
+                count = risk_per_account_df[
+                    (risk_per_account_df['glAccountNumber'] == account) & 
+                    (risk_per_account_df['risk_label'] == risk)
+                ]['risk_count'].sum()
+                data.append(int(count))
+            series.append({'name': risk, 'data': data})
 
-    # Render the chart in Streamlit using streamlit_highcharts
-    st.write("### Stacked Column Chart: Risk Journals per Account")
-    hct.streamlit_highcharts(chart_options)
+        # Embed JavaScript + HTML into Streamlit
+        html_code = f"""
+        <div id="container" style="width: 100%; height: 400px;"></div>
+        <script src="https://code.highcharts.com/highcharts.js"></script>
+        <script src="https://code.highcharts.com/modules/exporting.js"></script>
+        <script src="https://code.highcharts.com/modules/export-data.js"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {{
+                Highcharts.chart('container', {{
+                    chart: {{
+                        type: 'column'
+                    }},
+                    title: {{
+                        text: 'Risk Journals per Account'
+                    }},
+                    xAxis: {{
+                        categories: {categories},
+                        title: {{
+                            text: 'Accounts'
+                        }}
+                    }},
+                    yAxis: {{
+                        min: 0,
+                        title: {{
+                            text: 'Risk Count',
+                            align: 'high'
+                        }}
+                    }},
+                    plotOptions: {{
+                        column: {{
+                            stacking: 'normal'
+                        }}
+                    }},
+                    series: {series}
+                }});
+            }});
+        </script>
+        """
+
+        # Render the HTML/JavaScript in Streamlit
+        st.write("### Stacked Column Chart: Risk Journals per Account")
+        st.components.v1.html(html_code, height=500)
+
+    except Exception as e:
+        st.error(f"An error occurred while creating the chart: {e}")
 
 
 def createChart3(out_data):
-    
-    #test_data=st.session_state['test_data']
-    
-    chart1url= out_data['summary']['chart3url']
-    # print(chart1url)
-    data = load_data_from_blob(chart1url)
-    df = pd.DataFrame(data)
-    
-    # Highcharts configuration for pie chart
-    # Prepare the data for Highcharts
-    pie_data = df.to_dict(orient='records')
-    # If needed, ensure proper types:
-    pie_data = [{'name': str(record['risk_label']), 'y': int(record['overall_risk_count'])} for record in pie_data]
+    try:
+        # Load data from the blob URL
+        chart3url = out_data['summary']['chart3url']
+        #st.write(f"Data source URL: {chart3url}")  # Display the URL for debugging
+        data = load_data_from_blob(chart3url)  # Ensure this function works correctly
+        df = pd.DataFrame(data)
 
-    #pie_data = [{'name': str(row['risk']), 'y': int(row['overall_risk_count'])} for row in df]
+        # Validate the DataFrame
+        if len(df) == 0 or 'risk_label' not in df.columns or 'overall_risk_count' not in df.columns:
+            st.info("The dataset does not contain valid data for the chart.")
+            return
 
-    # Highcharts configuration for pie chart
-    chart_config = {
-        'chart': {
-            'type': 'pie'
-        },
-        'title': {
-            'text': 'Overall Number of Low/Medium/High Risk Journals'
-        },
-        'series': [{
-            'name': 'Journals Count',
-            'colorByPoint': True,
-            'data': pie_data
-        }]
-    }
+        # Prepare data for Highcharts
+        pie_data = [
+            {'name': str(row['risk_label']), 'y': int(row['overall_risk_count'])}
+            for _, row in df.iterrows()
+        ]
 
-    # Render the chart in Streamlit
-    st.title("Risk Distribution Pie Chart")
-    
-    hct.streamlit_highcharts(chart_config)
+        # Embed JavaScript + HTML into Streamlit
+        html_code = f"""
+        <div id="container" style="width: 100%; height: 400px;"></div>
+        <script src="https://code.highcharts.com/highcharts.js"></script>
+        <script src="https://code.highcharts.com/modules/exporting.js"></script>
+        <script src="https://code.highcharts.com/modules/export-data.js"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {{
+                Highcharts.chart('container', {{
+                    chart: {{
+                        type: 'pie'
+                    }},
+                    title: {{
+                        text: 'Overall Number of Low/Medium/High Risk Journals'
+                    }},
+                    series: [{{
+                        name: 'Journals Count',
+                        colorByPoint: true,
+                        data: {pie_data}
+                    }}]
+                }});
+            }});
+        </script>
+        """
 
+        # Render the HTML/JavaScript in Streamlit
+        st.write("### Risk Distribution Pie Chart")
+        st.components.v1.html(html_code, height=500)
+
+    except Exception as e:
+        st.error(f"An error occurred while creating the chart: {e}")
 
 def build_hierarchy(df):
     data = []
