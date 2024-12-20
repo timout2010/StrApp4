@@ -179,7 +179,7 @@ def sanitize_table_name(name):
 
 def generate_GLtable_html(tablenname,filter ):
     
-    with open("main.js", "r") as file:
+    with open("main1.js", "r") as file:
             main_js = file.read()
     #filter=st.session_state.filter
     return f"""
