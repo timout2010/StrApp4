@@ -6,7 +6,7 @@ API_URL_DATA = f"{FUNCTION_BASE_URL}/GetPaginatedData"
 API_URL_TOTAL_RECORDS = f"{FUNCTION_BASE_URL}/GetTotalRecords"
 API_URL_SUBTABLE = f"{FUNCTION_BASE_URL}/GetSubtableData"
 API_UR_PIVOT = f"{FUNCTION_BASE_URL}/RunSQL"
-
+API_PIVOTCHART_URL=f"{FUNCTION_BASE_URL}/getchart"
 
 test_data2 = {
         "UnusualTest": {
@@ -203,6 +203,17 @@ def generate_GLtable_html(tablenname,filter ):
 
     """
 
+def generate_PowerBI_html(tablenname,filter ):
+    
+    #filter=st.session_state.filter
+    return f"""
+        <!-- AG Grid Styles -->
+
+   
+
+<iframe title="PowerBIPoc" width="1740" height="750.25" src="https://app.powerbi.com/reportEmbed?reportId=f4c3599d-6c6f-45f0-a97d-b55df0cd34a2&autoAuth=true&ctid=8ac76c91-e7f1-41ff-a89c-3553b2da2c17" frameborder="0" allowFullScreen="true"></iframe>
+    """
+
 
 def generate_Pivottable_html(tablenname,filter ):
     
@@ -212,7 +223,7 @@ def generate_Pivottable_html(tablenname,filter ):
     return f"""
       
          
-
+       
     <div style="height: 700px; " id="myPivotGrid" class="ag-theme-alpine"></div>
     <!-- Define global variables -->
         <script>
@@ -220,6 +231,8 @@ def generate_Pivottable_html(tablenname,filter ):
             window.TABLE_NAME = "{tablenname}";
             window.API_SUB_URL = "{API_URL_SUBTABLE}";
             window.API_PIVOT_URL="{API_UR_PIVOT}";
+            window.API_PIVOTCHART_URL="{API_PIVOTCHART_URL}";
+            
             window.FILTER = "{filter}";
         </script>
         <!-- AG Grid Enterprise Script -->
@@ -232,6 +245,71 @@ def generate_Pivottable_html(tablenname,filter ):
 
 
     """
+def generate_PivotCharttable_html(tablenname,filter ):
+    print("generate_PivotCharttable_html"+tablenname)
+    with open("main3.js", "r") as file:
+            main_js = file.read()
+    #filter=st.session_state.filter
+    return f"""
+      
+        <link rel="stylesheet" href="style.css" />
+               <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-grid.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-theme-alpine.css"
+    />
+    <link rel="stylesheet" href="style.css" />
+
+         <script>
+            window.API_URL = "{API_URL_DATA}";
+            window.TABLE_NAME = "{tablenname}";
+            window.API_SUB_URL = "{API_URL_SUBTABLE}";
+            window.API_PIVOT_URL="{API_UR_PIVOT}";
+            window.API_PIVOTCHART_URL="{API_PIVOTCHART_URL}";
+            window.FILTER = "{filter}";
+        </script>
+       
+    
+   <div id="wrapper" style="    height: 100%;    width: 100%;    display: flex;    flex-direction: column;    gap: 10px;    padding: 10px;    box-sizing: border-box;">
+      <div id="top" style="    display: flex;    gap: 10px;    min-height: 300px;    max-height: 300px;">
+        <div id="columnChart" style="height: 300px; width: 50%;"></div>
+        <div id="pieChart" style="height: 300px; width: 50%;"></div>
+      </div>
+      <div id="barChart" style="height: 300px; width: 100%;"></div>
+      <div id="myPivotChartGrid" style="height: 500px; width: 100%;"></div>
+    </div>
+
+    <!-- AG Grid and Your main.js -->
+    <script src="https://cdn.jsdelivr.net/npm/ag-charts-enterprise@11.0.0/dist/umd/ag-charts-enterprise.min.js?t=1734371293200"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ag-grid-enterprise@33.0.2/dist/ag-grid-enterprise.min.js?t=1734371293200"></script>
+<script src="https://unpkg.com/ag-grid-community/dist/ag-grid-community.min.noStyle.js"></script>
+    <!-- If using enterprise features, include ag-grid-enterprise -->
+    <script src="https://unpkg.com/ag-grid-enterprise/dist/ag-grid-enterprise.min.noStyle.js"></script>
+
+
+        <script>{main_js}</script>
+
+
+
+    """
+
+def mainPowerBI(test_data,out_data):
+    #st.set_page_config(page_title="General Ledger testing", layout="wide")
+    
+    
+    
+    
+
+   
+    tablename=sanitize_table_name(test_data['unique_file_name'])
+    #tablename="pocGLcsv"
+    glTable_html = generate_PowerBI_html(tablename,"")
+    # glTable_html = generate_Pivottable_html(tablename,st.session_state.filter)
+    
+    st.components.v1.html(glTable_html , height=900)
 
 
 def mainPivot(test_data,out_data):
@@ -252,6 +330,26 @@ def mainPivot(test_data,out_data):
     # glTable_html = generate_Pivottable_html(tablename,st.session_state.filter)
     
     st.components.v1.html(glTable_html , height=900)
+
+def mainPivotChart(test_data,out_data):
+    #st.set_page_config(page_title="General Ledger testing", layout="wide")
+    
+    
+    
+    
+    if test_data is None:
+        test_data =test_data2
+
+   
+    #tablename=sanitize_table_name(test_data['unique_file_name'])
+    #tablename="pocGLcsv"
+    tablename=sanitize_table_name(test_data['unique_file_name'])
+    st.write(f"AG Grid Pivoting enterprise edition1")
+    glTable_html = generate_PivotCharttable_html(tablename,"")
+    # glTable_html = generate_Pivottable_html(tablename,st.session_state.filter)
+    
+    st.components.v1.html(glTable_html , height=900)
+
     
 def main2(test_data,out_data):
     #st.set_page_config(page_title="General Ledger testing", layout="wide")
