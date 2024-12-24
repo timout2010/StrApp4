@@ -7,6 +7,9 @@ from typing import Type
 #from turtle import width
 from app2 import main2
 from app2 import mainPivot
+from app2 import mainPivotChart
+from app2 import mainPowerBI
+
 import threading
 import streamlit as st
 import requests
@@ -25,14 +28,16 @@ from PIL import Image
 from io import BytesIO
 import ast
 # Configuration№
-# FUNCTION_BASE_URL = "http://localhost:7190/api" # e.g., https://<function-app>.azurewebsites.net/api/
-version="0.932a"
+#FUNCTION_BASE_URL = "http://localhost:7190/api" # e.g., https://<function-app>.azurewebsites.net/api/
+version="0.95a"
 FUNCTION_BASE_URL = "https://glauditazurefuntion.azurewebsites.net/api" # e.g., https://<function-app>.azurewebsites.net/api/
 
 GENERATE_SAS_TOKEN_ENDPOINT = f"{FUNCTION_BASE_URL}/GenerateSASToken"
 START_ORCHESTRATOR_ENDPOINT = f"{FUNCTION_BASE_URL}/start-orchestrator"
 EXTRACT_COLUMNS_ENDPOINT = f"{FUNCTION_BASE_URL}/start-column-extraction"  # New endpoint for column extraction
 CHECK_JOB_STATUS_ENDPOINT = f"{FUNCTION_BASE_URL}/check-job-status"
+GETCHART_ENDPOINT = f"{FUNCTION_BASE_URL}/getchart"
+RUNNOTEBOOK_ENDPOINT = f"{FUNCTION_BASE_URL}/RunDatabricksNotebook"
 API_URL_DATA = f"{FUNCTION_BASE_URL}/GetPaginatedData"
 API_URL_DOWNLOAD = f"{FUNCTION_BASE_URL}/DownloadTableCsv"
 storage_connection_string="DefaultEndpointsProtocol=https;AccountName=zuscutaargpletoaudi9020;AccountKey=i2Fs+bpmHyCWzk/lwpkclGW6gWaGQumksWbQgjDmverFwG+O/lmz1aTTvHxawzyT+rRDfxw3DKQ9+ASt8RFXow==;EndpointSuffix=core.windows.net"
@@ -218,7 +223,7 @@ def upload_file_to_blob( file,filename):
     blob_client = blob_service_client.get_blob_client(container="testcontainer", blob=filename)
     
     ret=blob_client.upload_blob(file, overwrite=True,max_concurrency=4)
-    #st.success("File uploaded to Azure Blob Storage.")
+    st.success("File uploaded to Azure Blob Storage."+str(storage_connection_string))
 
     #print(ret)
     
@@ -232,6 +237,21 @@ def start_orchestration(input_data):
     response = requests.post(START_ORCHESTRATOR_ENDPOINT, headers=headers, data=json.dumps(input_data))
     if response.status_code == 200:
         return response.json()['instanceId']
+    else:
+        st.error(f"Failed to start orchestration: {response.text}")
+        st.stop()
+
+
+def run_notebook(input_data):
+    headers = {"Content-Type": "application/json"}
+    # if FUNCTION_KEY:
+    #     headers["x-functions-key"] = FUNCTION_KEY
+    
+    #print(input_data)
+    response = requests.post(RUNNOTEBOOK_ENDPOINT, headers=headers, data=json.dumps(input_data))
+    print("run_notebook"+ str(response) )
+    if response.status_code == 200:
+        return "SUCCESS"
     else:
         st.error(f"Failed to start orchestration: {response.text}")
         st.stop()
@@ -271,7 +291,7 @@ def extract_columns( file_name,file_nameCA):
         
         "FileName": file_name,
         "FileNameCA":file_nameCA,
-         #"DatabricksJobId": 447087718645534 #old
+        #"DatabricksJobId": 447087718645534 #old
         "DatabricksJobId": 775618648147406
     }
 
@@ -606,45 +626,82 @@ def load_data_from_blob(sas_url):
     #return pd.read_json(sas_url)
     #return pd.read_csv(sas_url)
 
+@st.cache_data    
+def load_data_from_URL(chart,filter,filtered_df):
+    
+    
+    return pd.read_json(GETCHART_ENDPOINT+"?chart="+chart )
+    #return pd.read_csv(sas_url)
+
+@st.cache_data
+def applyfilter( filter, filtered_df):
+    print("applyfilter")
+    input_data={}
+    parameters={}
+    parameters["filter"]=filter
+    parameters['tablename']= st.session_state['test_data']['unique_file_name']
+    if filtered_df!="":
+       parameters['filtered_df']=json.dumps(filtered_df)
+    
+    
+    input_data['parameters']= parameters
+    print(input_data)
+    instance_id = run_notebook( input_data)
+    print("applyflter"+str(instance_id) )
+
 
 @st.cache_data
 def load_chart(test_data, filter, polling_interval=2, max_attempts=1120):
     
-    #test_data=st.session_state['test_dataChart']
-    print("!!Loading chart "+str(filter))
-    if str(filter) =="none" and 'filtered_df' not in test_data :
-        
-        return st.session_state['out_data']['summary']
     input_data={}
+    parameters={}
+    parameters["filter"]=filter
+    parameters['tablename']=test_data['unique_file_name']
+    if "filtered_df" in test_data:
+        parameters['filtered_df']=test_data['filtered_df']
+    
+    
+    input_data['parameters']= parameters
+    
+    instance_id = run_notebook( input_data)
+    print("load_chart"+str(instance_id) )
+    
+    
+    # #test_data=st.session_state['test_dataChart']
+    # print("!!Loading chart "+str(filter))
+    # if str(filter) =="none" and 'filtered_df' not in test_data :
+        
+    #     return st.session_state['out_data']['summary']
+    # input_data={}
 
-    #input_data['DatabricksJobId']=822693125667863 #Chart old
-    input_data['DatabricksJobId']=488644182429847 #Chart 
-    input_data['FileName']=test_data['unique_file_name']
-    input_data['Filter']=filter
-    input_data['Params']= json.dumps(test_data)
+    # #input_data['DatabricksJobId']=822693125667863 #Chart old
+    # input_data['DatabricksJobId']=488644182429847 #Chart 
+    # input_data['FileName']=test_data['unique_file_name']
+    # input_data['Filter']=filter
+    # input_data['Params']= json.dumps(test_data)
     
 
 
-    print("Start poll_for_chart1")        
-    instance_id = start_orchestration( input_data)
-    print("Start poll_for_chart"+instance_id )        
-    for _ in range(max_attempts):
-        time.sleep(polling_interval)
+    # print("Start poll_for_chart1")        
+    # instance_id = start_orchestration( input_data)
+    # print("Start poll_for_chart"+instance_id )        
+    # for _ in range(max_attempts):
+    #     time.sleep(polling_interval)
         
-        status = check_job_status(instance_id,"summary")
-        #print("poll_for_chart:"+str(status))
-        print(status)
+    #     status = check_job_status(instance_id,"summary")
+    #     #print("poll_for_chart:"+str(status))
+    #     print(status)
         
-        if status["output"] is not None:
-            print("Chart Complted !")
-            test_data["status"]="Completed"
-            outp=json.loads(status['output'])
+    #     if status["output"] is not None:
+    #         print("Chart Complted !")
+    #         test_data["status"]="Completed"
+    #         outp=json.loads(status['output'])
             
-            st.session_state["IsLoadedChart"]=False        
-            return outp
+    #         st.session_state["IsLoadedChart"]=False        
+    #         return outp
 
-        else:
-            test_data["status"]="in_progress"
+    #     else:
+    #         test_data["status"]="in_progress"
 
     
 
@@ -674,21 +731,25 @@ def DisplayChart():
             account_type = st.multiselect("Filter by Account Type", options=account_df["accountType"].unique(), default=None)
             subtype = st.multiselect("Filter by Subtype", options=account_df["accountSubType"].unique(), default=None)
 
-            filtered_df = account_df
+            filtered_df = ""
             if account_type:
-                filtered_df = filtered_df[filtered_df["accountType"].isin(account_type)]
+                filtered_df = account_df[account_df["accountType"].isin(account_type)]["glAccountNumber"].astype(int).to_list()
+                filtered_df =",".join(map(str, filtered_df ))
             if subtype:
-                filtered_df = filtered_df[filtered_df["accountSubType"].isin(subtype)]
+                filtered_df = account_df[account_df["accountSubType"].isin(subtype)]["glAccountNumber"].astype(int).to_list()
+                filtered_df =",".join(map(str, filtered_df ))
 
-            st.session_state["filtered_df"]=filtered_df["glAccountNumber"] 
-            st.session_state['test_data']["filtered_df"]=filtered_df["glAccountNumber"].to_list()
+            
             #st.dataframe(filtered_df)
             if st.button("Apply"):
     
                 #st.session_state['test_dataChart']={}
+                st.session_state["filtered_df"]=filtered_df 
+                #st.session_state["filtered_df"]=filtered_df["glAccountNumber"] 
+                st.session_state['test_data']["filtered_df"]=filtered_df     
+                st.session_state['test_dataChart']["filtered_df"]=filtered_df
+                st.session_state['out_data']['summary']=applyfilter(st.session_state.get("filter","none"),st.session_state["filtered_df"])
                 
-                st.session_state['test_dataChart']["filtered_df"]=filtered_df["glAccountNumber"].to_list()
-                st.session_state['out_data']['summary']=load_chart(st.session_state['test_dataChart'],st.session_state.get("filter","none"))
                 
         
                 
@@ -697,19 +758,26 @@ def DisplayChart():
         if( 'summary' in st.session_state['out_data']):
             col1, col2 = st.columns(2)
             with col1:
-                createChart4(st.session_state['out_data'])
-                createChart1(st.session_state['out_data'])
+                createChart4(st.session_state.get("filter","none"),st.session_state["filtered_df"])
+                createChart1(st.session_state.get("filter","none"),st.session_state["filtered_df"])
             with col2:
-                createChart2(st.session_state['out_data'])
-                createChart3(st.session_state['out_data'])
+                createChart2(st.session_state.get("filter","none"),st.session_state["filtered_df"])
+                createChart3(st.session_state.get("filter","none"),st.session_state["filtered_df"])
             
 
-def createChart1(out_data):
+def createChart1(filter,filtered_df):
     # Load data from the blob
-    chart1url = out_data['summary']['chart1url']
+    #chart1url = out_data['summary']['chart1url']
     #st.write(f"Data source URL: {chart1url}")
-    data = load_data_from_blob(chart1url)
+    #data = load_data_from_blob(chart1url)
+    print("Chart1"+str(st.session_state.get("filter","none"))+"!!!"+str(st.session_state["filtered_df"]))
+    
+    data = load_data_from_URL("chart1",st.session_state.get("filter","none"),st.session_state["filtered_df"])
     df = pd.DataFrame(data)
+
+
+
+
 
     st.subheader("Visualization 1: High-Risk Journals Per Month")
 
@@ -754,12 +822,13 @@ def createChart1(out_data):
     else:
         st.info("Chart is empty or data is invalid.")
 
-def createChart2(out_data):
+def createChart2(filter,filtered_df):
     try:
         # Load data from the blob URL
-        chart2url = out_data['summary']['chart2url']
+        #chart2url = out_data['summary']['chart2url']
         #st.write(f"Data source URL: {chart2url}")  # Display the URL for debugging
-        data = load_data_from_blob(chart2url)  # Ensure this function works correctly
+        #//data = load_data_from_blob(chart2url)  # Ensure this function works correctly
+        data = load_data_from_URL("chart2",st.session_state.get("filter","none"),st.session_state["filtered_df"])
         risk_per_account_df = pd.DataFrame(data)
 
         # Validate the DataFrame
@@ -833,12 +902,13 @@ def createChart2(out_data):
         st.error(f"An error occurred while creating the chart: {e}")
 
 
-def createChart3(out_data):
+def createChart3(filter,filtered_df):
     try:
         # Load data from the blob URL
-        chart3url = out_data['summary']['chart3url']
+        #chart3url = out_data['summary']['chart3url']
         #st.write(f"Data source URL: {chart3url}")  # Display the URL for debugging
-        data = load_data_from_blob(chart3url)  # Ensure this function works correctly
+        #//data = load_data_from_blob(chart3url)  # Ensure this function works correctly
+        data = load_data_from_URL("chart3",st.session_state.get("filter","none"),st.session_state["filtered_df"])
         df = pd.DataFrame(data)
 
         # Validate the DataFrame
@@ -883,7 +953,31 @@ def createChart3(out_data):
 
     except Exception as e:
         st.error(f"An error occurred while creating the chart: {e}")
+def createChart4(filter,filtered_df):
+    
+    #test_data=st.session_state['test_data']
+    
+    #chart4url= out_data['summary']['chart4url']
+    #chart4url="https://vsstoragelake.blob.core.windows.net/results/csv/sunburn_df/part-00000-tid-976918198008392936-f35bf24a-ff10-4cac-a4c5-f1c217ba3642-738-1-c000.csv?se=2024-12-05T11%3A11%3A58Z&sp=r&sv=2023-11-03&sr=b&sig=axvfW4upFwSMwIxyL1ku%2BOtd1aRMbUjpN3hATkuM9yI%3D"
+    # print(chart1url)
+    ##data = load_data_from_blob(chart4url)
+    
+    data = load_data_from_URL("chart4",st.session_state.get("filter","none"),st.session_state["filtered_df"])
+    df = pd.DataFrame(data)
+    #data = build_hierarchy(df)
 
+# Highcharts configuration
+    chart_title    ="xx"
+# Highcharts configuration
+    data = build_hierarchy(df)
+    st.write("### General Ledger Account Hierarchy")
+    #st.title("General Ledger Account Hierarchy")
+    sunburst_html = generate_sunburst_html(data )
+    st.components.v1.html(sunburst_html, height=600)
+
+    # Render the chart in Streamlit
+
+    #hct.streamlit_highcharts(options)
 def build_hierarchy(df):
     data = []
     id_counter = 0  # To generate unique IDs
@@ -1026,29 +1120,7 @@ def generate_sunburst_html(data):
     </script>
     """
 
-def createChart4(out_data):
-    
-    #test_data=st.session_state['test_data']
-    
-    chart4url= out_data['summary']['chart4url']
-    #chart4url="https://vsstoragelake.blob.core.windows.net/results/csv/sunburn_df/part-00000-tid-976918198008392936-f35bf24a-ff10-4cac-a4c5-f1c217ba3642-738-1-c000.csv?se=2024-12-05T11%3A11%3A58Z&sp=r&sv=2023-11-03&sr=b&sig=axvfW4upFwSMwIxyL1ku%2BOtd1aRMbUjpN3hATkuM9yI%3D"
-    # print(chart1url)
-    data = load_data_from_blob(chart4url)
-    df = pd.DataFrame(data)
-    #data = build_hierarchy(df)
 
-# Highcharts configuration
-    chart_title    ="xx"
-# Highcharts configuration
-    data = build_hierarchy(df)
-    st.write("### General Ledger Account Hierarchy")
-    #st.title("General Ledger Account Hierarchy")
-    sunburst_html = generate_sunburst_html(data )
-    st.components.v1.html(sunburst_html, height=600)
-
-    # Render the chart in Streamlit
-
-    #hct.streamlit_highcharts(options)
 def get_risk_class(risk_level):
     if risk_level == "LOW":
         return "low-risk"
@@ -1064,10 +1136,11 @@ def DisplayCard(test_data):
     out_data=st.session_state['out_data']
     print("DisplCard0")
 
-    chart3url= out_data['summary']['chart3url']
+    #chart3url= out_data['summary']['chart3url']
     
     if  "cards_data" not in st.session_state:
-        st.session_state["cards_data"]= load_data_from_blob(chart3url)
+        st.session_state["cards_data"]= load_data_from_URL("chart3","",st.session_state['filtered_df'])
+        #st.session_state["cards_data"]= load_data_from_blob(chart3url)
         
     data =st.session_state["cards_data"]
     df = pd.DataFrame(data)
@@ -1123,6 +1196,7 @@ def DisplayCard(test_data):
                         st.session_state.page = 1
                         st.session_state.filter=row_data['risk_label']
                         st.session_state.IsLoadedChart=False
+                        st.session_state['out_data']['summary']=applyfilter(st.session_state.get("filter","none"),st.session_state["filtered_df"])
     num_cols = 5
     cards_per_row=5
     col_num=-1
@@ -1172,6 +1246,7 @@ def DisplayCard(test_data):
                     st.session_state.page = 1
                     st.session_state.filter=test_key
                     st.session_state.IsLoadedChart=False
+                    st.session_state['out_data']['summary']=applyfilter(st.session_state.get("filter","none"),st.session_state["filtered_df"])
                     
 def download_data(tablename,filter):
     params = {
@@ -1293,12 +1368,12 @@ def main():
        
     
     display_tableTests()
-    
+        
     if 'summary' in st.session_state['out_data']:   
         print("Try to DisplayCard")
         DisplayCard(st.session_state['test_data']) 
     st.markdown(f"### {st.session_state.get('filter','')}")
-    tab1, tab2 ,tab3= st.tabs(["📈 Chart", "🗃 Tables","📊 Pivot table"])
+    tab1, tab2 ,tab3,tab4,tab5= st.tabs(["📈 Chart", "🗃 Tables","📊 Pivot table","📉 Pivot cross chart","🔌 Power BI"])
     print("IsLoadedChart: "+str(st.session_state.IsLoadedChart)+str(st.session_state['IsLoadedChartTab1']))
     
     with tab1:
@@ -1309,7 +1384,7 @@ def main():
         
         if( 'summary' in st.session_state['out_data']):
             print("try to load chart1"+str(st.session_state.get("filter","None")))
-            st.session_state['out_data']['summary']=load_chart(st.session_state['test_dataChart'],st.session_state.get("filter","none"))
+            #st.session_state['out_data']['summary']=load_chart(st.session_state['test_dataChart'],st.session_state.get("filter","none")) 
 
         if(st.session_state['out_data']):
             print("Chart try1 ")
@@ -1330,6 +1405,22 @@ def main():
         
         if 'summary' in st.session_state['out_data']:
             mainPivot(st.session_state['test_data'],st.session_state['out_data'])
+        # st.session_state['IsLoadedChartTab2'] = True   
+    with tab4:
+        print("tab4")
+    #    st.session_state['test_data']['unique_file_name']="pocglcsv"
+     #   mainPivotChart(st.session_state['test_data'],"")
+        
+        if 'summary' in st.session_state['out_data']:
+            mainPivotChart(st.session_state['test_data'],st.session_state['out_data'])
+        # st.session_state['IsLoadedChartTab2'] = True   
+    with tab5:
+        print("tab5")
+       # st.session_state['test_data']['unique_file_name']="pocglcsv"
+       # mainPowerBI(st.session_state['test_data'],"")
+        
+        if 'summary' in st.session_state['out_data']:
+            mainPowerBI(st.session_state['test_data'],st.session_state['out_data'])
         # st.session_state['IsLoadedChartTab2'] = True   
         
 
