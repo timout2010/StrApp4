@@ -9,6 +9,7 @@ from app2 import main2
 from app2 import mainPivot
 from app2 import mainPivotChart
 from app2 import mainPowerBI
+from app2 import mainDashboard
 
 import threading
 import streamlit as st
@@ -248,6 +249,7 @@ def run_notebook(input_data):
     #     headers["x-functions-key"] = FUNCTION_KEY
     
     #print(input_data)
+    
     response = requests.post(RUNNOTEBOOK_ENDPOINT, headers=headers, data=json.dumps(input_data))
     print("run_notebook"+ str(response) )
     if response.status_code == 200:
@@ -1170,7 +1172,7 @@ def DisplayCard(test_data):
                 with cols[col_num]:
                     # Render the card HTML
                     st.markdown(f"""
-                        <div class="card">
+                        <div class="card" >
                             <div class="{get_risk_class(row_data['risk_label'])}">
                                 <div class="header">{row_data['risk_label']}</div>
                                 <div class="meta">Risk Level</div>
@@ -1373,7 +1375,7 @@ def main():
         print("Try to DisplayCard")
         DisplayCard(st.session_state['test_data']) 
     st.markdown(f"### {st.session_state.get('filter','')}")
-    tab1, tab2 ,tab3,tab4,tab5= st.tabs(["📈 Chart", "🗃 Tables","📊 Pivot table","📉 Pivot cross chart","🔌 Power BI"])
+    tab1, tab2 ,tab3,tab4,tab5,tab6= st.tabs(["📈 Chart", "🗃 Tables","📊 Pivot table","📉 Pivot cross chart","🔌 Power BI","🧮 Dashboard"])
     print("IsLoadedChart: "+str(st.session_state.IsLoadedChart)+str(st.session_state['IsLoadedChartTab1']))
     
     with tab1:
@@ -1422,6 +1424,12 @@ def main():
         if 'summary' in st.session_state['out_data']:
             mainPowerBI(st.session_state['test_data'],st.session_state['out_data'])
         # st.session_state['IsLoadedChartTab2'] = True   
+    with tab6:
+        st.session_state['test_data']['unique_file_name']="pocglcsv"
+        mainDashboard(st.session_state['test_data'],"")
+       
+        if 'summary' in st.session_state['out_data']:
+            mainDashboard(st.session_state['test_data'],st.session_state['out_data'])
         
 
     if st.button("."):
