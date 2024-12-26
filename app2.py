@@ -214,6 +214,19 @@ def generate_PowerBI_html(tablenname,filter ):
 <iframe title="PowerBIPoc" width="1740" height="750.25" src="https://app.powerbi.com/reportEmbed?reportId=f4c3599d-6c6f-45f0-a97d-b55df0cd34a2&autoAuth=true&ctid=8ac76c91-e7f1-41ff-a89c-3553b2da2c17" frameborder="0" allowFullScreen="true"></iframe>
     """
 
+def generate_Dashboard_html(tablenname,filter ):
+    
+    #filter=st.session_state.filter
+    return f"""
+        <!-- AG Grid Styles -->
+
+   
+
+
+<iframe src="https://adb-3836207443186861.1.azuredatabricks.net/embed/dashboardsv3/01efc1e7d89d1fddb46df1fe11926ca4?o=3836207443186861" width="100%" height="600" frameborder="0"></iframe>
+
+    """
+
 
 def generate_Pivottable_html(tablenname,filter ):
     
@@ -295,6 +308,22 @@ def generate_PivotCharttable_html(tablenname,filter ):
 
 
     """
+
+
+def mainDashboard(test_data,out_data):
+    #st.set_page_config(page_title="General Ledger testing", layout="wide")
+    
+    
+    
+    
+
+   
+    tablename=sanitize_table_name(test_data['unique_file_name'])
+    #tablename="pocGLcsv"
+    glTable_html = generate_Dashboard_html(tablename,"")
+    # glTable_html = generate_Pivottable_html(tablename,st.session_state.filter)
+    
+    st.components.v1.html(glTable_html , height=900)
 
 def mainPowerBI(test_data,out_data):
     #st.set_page_config(page_title="General Ledger testing", layout="wide")
