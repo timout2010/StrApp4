@@ -1418,15 +1418,15 @@ def main():
         # st.session_state['IsLoadedChartTab2'] = True   
     with tab5:
         print("tab5")
-       # st.session_state['test_data']['unique_file_name']="pocglcsv"
-       # mainPowerBI(st.session_state['test_data'],"")
+        st.session_state['test_data']['unique_file_name']="pocglcsv"
+        mainPowerBI(st.session_state['test_data'],"")
         
         if 'summary' in st.session_state['out_data']:
             mainPowerBI(st.session_state['test_data'],st.session_state['out_data'])
         # st.session_state['IsLoadedChartTab2'] = True   
     with tab6:
-        st.session_state['test_data']['unique_file_name']="pocglcsv"
-        mainDashboard(st.session_state['test_data'],"")
+        #st.session_state['test_data']['unique_file_name']="pocglcsv"
+        #mainDashboard(st.session_state['test_data'],"")
        
         if 'summary' in st.session_state['out_data']:
             mainDashboard(st.session_state['test_data'],st.session_state['out_data'])
