@@ -628,8 +628,8 @@ def load_data_from_blob(sas_url):
     #return pd.read_json(sas_url)
     #return pd.read_csv(sas_url)
 
-@st.cache_data    
-def load_data_from_URL(chart,filter,filtered_df):
+@st.cache_data 
+def load_data_from_URL(chart,filter,filtered_df,tablaname):
     
     
     return pd.read_json(GETCHART_ENDPOINT+"?chart="+chart )
@@ -774,7 +774,7 @@ def createChart1(filter,filtered_df):
     #data = load_data_from_blob(chart1url)
     print("Chart1"+str(st.session_state.get("filter","none"))+"!!!"+str(st.session_state["filtered_df"]))
     
-    data = load_data_from_URL("chart1",st.session_state.get("filter","none"),st.session_state["filtered_df"])
+    data = load_data_from_URL("chart1",st.session_state.get("filter","none"),st.session_state["filtered_df"],st.session_state['test_data']['unique_file_name'] )
     df = pd.DataFrame(data)
 
 
@@ -830,7 +830,7 @@ def createChart2(filter,filtered_df):
         #chart2url = out_data['summary']['chart2url']
         #st.write(f"Data source URL: {chart2url}")  # Display the URL for debugging
         #//data = load_data_from_blob(chart2url)  # Ensure this function works correctly
-        data = load_data_from_URL("chart2",st.session_state.get("filter","none"),st.session_state["filtered_df"])
+        data = load_data_from_URL("chart2",st.session_state.get("filter","none"),st.session_state["filtered_df"],st.session_state['test_data']['unique_file_name'] )
         risk_per_account_df = pd.DataFrame(data)
 
         # Validate the DataFrame
@@ -910,7 +910,7 @@ def createChart3(filter,filtered_df):
         #chart3url = out_data['summary']['chart3url']
         #st.write(f"Data source URL: {chart3url}")  # Display the URL for debugging
         #//data = load_data_from_blob(chart3url)  # Ensure this function works correctly
-        data = load_data_from_URL("chart3",st.session_state.get("filter","none"),st.session_state["filtered_df"])
+        data = load_data_from_URL("chart3",st.session_state.get("filter","none"),st.session_state["filtered_df"],st.session_state['test_data']['unique_file_name'] )
         df = pd.DataFrame(data)
 
         # Validate the DataFrame
@@ -964,7 +964,7 @@ def createChart4(filter,filtered_df):
     # print(chart1url)
     ##data = load_data_from_blob(chart4url)
     
-    data = load_data_from_URL("chart4",st.session_state.get("filter","none"),st.session_state["filtered_df"])
+    data = load_data_from_URL("chart4",st.session_state.get("filter","none"),st.session_state["filtered_df"],st.session_state['test_data']['unique_file_name'] )
     df = pd.DataFrame(data)
     #data = build_hierarchy(df)
 
@@ -1141,7 +1141,7 @@ def DisplayCard(test_data):
     #chart3url= out_data['summary']['chart3url']
     
     if  "cards_data" not in st.session_state:
-        st.session_state["cards_data"]= load_data_from_URL("chart3","",st.session_state['filtered_df'])
+        st.session_state["cards_data"]= load_data_from_URL("chart3","",st.session_state['filtered_df'],st.session_state['test_data']['unique_file_name'] )
         #st.session_state["cards_data"]= load_data_from_blob(chart3url)
         
     data =st.session_state["cards_data"]
