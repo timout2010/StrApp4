@@ -548,7 +548,7 @@ def poll_for_task(test_data,out_data, polling_interval=10, max_attempts=1120):
     input_data['Params']= json.dumps(test_data)
     
     instance_id = start_orchestration( input_data)
-    print("Start poll_for_task"+instance_id )        
+    print("Start poll_for_task"+instance_id +str(input_data['FileName']))        
     for _ in range(max_attempts):
         time.sleep(polling_interval)
         
@@ -1425,8 +1425,8 @@ def main():
             mainPowerBI(st.session_state['test_data'],st.session_state['out_data'])
         # st.session_state['IsLoadedChartTab2'] = True   
     with tab6:
-        st.session_state['test_data']['unique_file_name']="pocglcsv"
-        mainDashboard(st.session_state['test_data'],"")
+        #st.session_state['test_data']['unique_file_name']="pocglcsv"
+        #mainDashboard(st.session_state['test_data'],"")
        
         if 'summary' in st.session_state['out_data']:
             mainDashboard(st.session_state['test_data'],st.session_state['out_data'])
