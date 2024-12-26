@@ -1418,11 +1418,13 @@ def main():
         # st.session_state['IsLoadedChartTab2'] = True   
     with tab5:
         print("tab5")
-        st.session_state['test_data']['unique_file_name']="pocglcsv"
-        mainPowerBI(st.session_state['test_data'],"")
-        
+       # st.session_state['test_data']['unique_file_name']="pocglcsv"
+       # mainPowerBI(st.session_state['test_data'],"")
         if 'summary' in st.session_state['out_data']:
-            mainPowerBI(st.session_state['test_data'],st.session_state['out_data'])
+           new_page_url = "https://app.powerbi.com/reportEmbed?reportId=861832a8-e09f-4e27-a693-f014d5701b74&autoAuth=true&ctid=8ac76c91-e7f1-41ff-a89c-3553b2da2c17"
+           st.markdown(f'<a href="{new_page_url}" target="_blank">Open Power BI</a>', unsafe_allow_html=True)
+
+            #mainPowerBI(st.session_state['test_data'],st.session_state['out_data'])
         # st.session_state['IsLoadedChartTab2'] = True   
     with tab6:
         #st.session_state['test_data']['unique_file_name']="pocglcsv"
