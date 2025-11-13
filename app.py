@@ -10,7 +10,7 @@ from app2 import mainPivot
 from app2 import mainPivotChart
 from app2 import mainPowerBI
 from app2 import mainDashboard
-
+  
 import threading
 import streamlit as st
 import requests
