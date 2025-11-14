@@ -7,9 +7,6 @@ import streamlit as st
 import requests
 from azure.storage.blob import BlobServiceClient
 
-# -------------------------------------------------------------------
-# CONFIG
-# -------------------------------------------------------------------
 FUNCTION_BASE_URL = "http://localhost:7190/api"  # or your Function App URL
 version = "0.95a"
 
