@@ -21,7 +21,7 @@ container = "testcontainer"
 # Your C# API endpoint
 #PREVIEW_API_URL = "http://localhost:7164/api/Preview"
 PREVIEW_API_URL = "https://automappoc.azurewebsites.net/api/Preview"
-version = "0.1a"
+version = "0.2a"
 
 
 # ---------------------------------------------------
