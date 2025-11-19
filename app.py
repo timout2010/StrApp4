@@ -167,7 +167,7 @@ def main():
             "Pre LLM threshold",
             min_value=0.0,
             max_value=1.0,
-            value=0.81,
+            value=0.79,
             step=0.01,
             format="%.2f",
         )
@@ -183,7 +183,7 @@ def main():
             "TopK candidates",
             min_value=1,
             max_value=500,
-            value=250,
+            value=50,
             step=1,
         )
 
