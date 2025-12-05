@@ -229,7 +229,7 @@ def main():
                 #st.json(result)
             except Exception as ex:
                 st.error(f"Failed to call preview API: {ex}")
-            finally:
+            #finally:
 	            # 3. ALWAYS delete uploaded blob (success or fail)
                 #delete_blob(blob_name)
 
