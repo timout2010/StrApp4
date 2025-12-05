@@ -231,7 +231,7 @@ def main():
                 st.error(f"Failed to call preview API: {ex}")
             finally:
 	            # 3. ALWAYS delete uploaded blob (success or fail)
-                delete_blob(blob_name)
+                #delete_blob(blob_name)
 
 
 import pandas as pd
