@@ -13,7 +13,7 @@ from azure.storage.blob import BlobSasPermissions, BlobServiceClient, generate_b
 # ---------------------------------------------------
 # APP VERSION
 # ---------------------------------------------------
-VERSION = "0.8.0"
+VERSION = "0.8.1"
 
 # ---------------------------------------------------
 # CONFIG HELPERS
@@ -37,7 +37,7 @@ DEFAULT_CONTAINER = get_secret("AZURE_STORAGE_CONTAINER", "testcontainer")
 DEFAULT_STORAGE_CONNECTION_STRING = get_secret("AZURE_STORAGE_CONNECTION_STRING", "DefaultEndpointsProtocol=https;AccountName=zusculetoaudstrdda01;AccountKey=l3PYt2ZrVnGDODnzJRwAD6bL8QXmQdKluC+gTYOLB7FwkQNp8RqSMfEJbaaRW5na7ZI8SnZyC96X+ASteh11FQ==;EndpointSuffix=core.windows.net")
 
 DEFAULT_API_BASE_URL = "https://automappoc.azurewebsites.net"
-DEFAULT_PREVIEW_PATH = "https://automappoc.azurewebsites.net/api/Preview2"
+DEFAULT_PREVIEW_PATH = "https://automappoc.azurewebsites.net/api/Preview"
 
 
 
